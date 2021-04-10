@@ -81,17 +81,6 @@ Sub addOneLineOfDevisOrDMP()
     Range("'template'!$D$" & startRowRecap & ":$D$" & endRowRecap + 1).Name = "DevisEtDMPRecap"
     Range("C" & endLine + 1).Select
 End Sub
-'Not used for now as the direct formula seems to be more convenient
-Sub refreshAFormula(cellTo, columnFromStart, columnFromEnd, startRow, endRow)
-    Range(cellTo).Value = "$" & columnFrom & "$" & startRow & "$" & columnFrom & "$" & endRow
-End Sub
-Sub refreshFormulasDependingOnArticlesListing(startRow, endRow)
-    Range("Z36").Value = "$C$" & startRow & ":$C$" & endRow
-    Range("AA36").Value = "$D$" & startRow & ":$D$" & endRow
-    Range("AB36").Value = "$E$" & startRow & ":$Q$" & endRow
-    Range("AC36").Value = "$R$" & startRow & ":$R$" & endRow
-    Range("AD36").Value = "$S$" & startRow & ":$S$" & endRow
-End Sub
 
 Sub addOneArticle()
     'Getting the last line in which we have an article.
@@ -136,11 +125,6 @@ Sub addLinesToDoubleRowTables(endRow, lineInsert, columnStartLine, columnEndLine
     Application.CutCopyMode = False
 End Sub
 
-Sub refreshFormulasDependingOnAppelDeFondTable(startRow, endRow)
-    Range("Z40").Value = "$K$" & startRow & ":$K$" & endRow
-    Range("AA40").Value = "$L$" & startRow & ":$M$" & endRow
-    Range("AB40").Value = "$N$" & startRow & ":$O$" & endRow
-End Sub
 Sub addOneAppelDeFond()
     'Getting the last line in which he have an "appel de fond".
     'We take the named range MontantsTVAAppeles as it is one of the most used of that table
@@ -159,20 +143,20 @@ Sub addOneAppelDeFond()
     Range("'template'!$L$" & startRow & ":$M$" & endRow + 2).Name = "MontantsTVAAppeles"
     Range("'template'!$N$" & startRow & ":$O$" & endRow + 2).Name = "MontantsTTCAppeles"
     'We check if the table containig the taxe d'ameublement is well calculated. If not we refresh it.
-    Call refreshToTaxeDAmeublementTable
+    Call refreshTaxeDAmeublementTable
+    Call refreshTaxeDAmeublemnentOfCurrentInvoice(startRow, endRow + 2)
 End Sub
 
 Sub addOneInvoiceToRecapitulatif()
     'Getting the starting and ending row of the "Factures d'acompte"
     startRow = Range("MontantsFacturesAppeles").Row
-    endRow = Range("MontantsFacturesAppeles").Row + Range("MontantsFacturesAppeles").Rows.Count - 1  ' Range("C1:D1000").Find(what:="Facture d'acompte :", searchorder:=xlByRows, searchdirection:=xlPrevious).Row + 1
+    endRow = Range("MontantsFacturesAppeles").Row + Range("MontantsFacturesAppeles").Rows.Count - 1
     lineInsert = endRow + 1
     'Beware: we have two lines to add here
     Call addLinesToDoubleRowTables(endRow, lineInsert, "C", "S")
     Range("C" & endRow + 1).Value = "Facture d'acompte :"
     Range("H" & endRow + 1).Formula = "=" & Range("TotalTTCFacture").Address ' "=$L$" & invoiceTotalTTC
     'Refreshing the named ranges based on the table Factures d'acompte
-    'Call refreshFormulasDependingOnFacturesDAcomptesTable(startRow, endRow + 2)
     Range("'template'!$H$" & startRow & ":$I$" & endRow + 2).Name = "MontantsFacturesAppeles"
     Range("'template'!$J$" & startRow & ":$K$" & endRow + 2).Name = "MontantsPayesSurFacturesAppeles"
     Range("'template'!$R$" & startRow & ":$S$" & endRow + 2).Name = "RestantsDusSurFacturesAppeles"
@@ -197,67 +181,22 @@ Sub refreshTaxeDAmeublementTable()
     End If
 End Sub
 
-Sub refreshFormulasDependingOnTaxeDAmeublementTable(startRow, endRow)
-    Range("Z23").Value = "$Z$" & startRow & ":$AA$" & endRow
-    Range("AA23").Value = "$AB$" & startRow & ":$AB$" & endRow
-    Range("AB23").Value = "$AC$" & startRow & ":$AC$" & endRow
-End Sub
-
 Sub refreshTaxeDAmeublemnentOfCurrentInvoice(startRow, endRow)
     i = startRow
-    formulaTaxeDAmeublement = "=IF($AA$11=""Y"","
+    formulaTaxeDAmeublement = "=IF(TaxeAmeublementExiste=""Y"","
     formulaTaxeDAmeublement = formulaTaxeDAmeublement & _
-        "$F$" & i & "*(SUMIF(INDIRECT($Z$23)," & "$G$" & i & ",INDIRECT($AA$23))+" _
-        & "SUMIF(INDIRECT($Z$23)," & "$G$" & i & ",INDIRECT($AB$23)))"
+        "$F$" & i & "*(SUMIF(UniqueRefDevisEtDMPs," & "$G$" & i & ",TaxeAmeublementN)+" _
+        & "SUMIF(UniqueRefDevisEtDMPs," & "$G$" & i & ",TaxeAmeublementR))"
     i = i + 2
     Do While i <= endRow
         formulaTaxeDAmeublement = formulaTaxeDAmeublement & _
-        "+$F$" & i & "*(SUMIF(INDIRECT($Z$23)," & "$G$" & i & ",INDIRECT($AA$23))+" _
-        & "SUMIF(INDIRECT($Z$23)," & "$G$" & i & ",INDIRECT($AB$23)))"
+        "+$F$" & i & "*(SUMIF(UniqueRefDevisEtDMPs," & "$G$" & i & ",TaxeAmeublementN)+" _
+        & "SUMIF(UniqueRefDevisEtDMPs," & "$G$" & i & ",TaxeAmeublementR))"
         i = i + 2
     Loop
     formulaTaxeDAmeublement = formulaTaxeDAmeublement & ","""")"
     'Puting the formula at the right place
-    lineOfTaxeDAmeublement = Application.Match("** dont Taxe d'ameublement (A) 0,18% : ", Range("H:H"), 0)
-    Range("L" & lineOfTaxeDAmeublement).Formula = formulaTaxeDAmeublement
-End Sub
-
-Sub refreshFormulasDependingOnFacturesDAcomptesTable(startRow, endRow)
-    Range("Z93").Value = "$H$" & startRow & ":$I$" & endRow
-    Range("AA93").Value = "$R$" & startRow & ":$S$" & endRow
-End Sub
-
-Sub refreshAllReferences()
-    'Refreshing formulas based on the table of Articles
-    'Getting the last line in which we have an article. We add 3 to bypass the problems caused by the merged cells
-    startRow = Application.Match("Ref devis et DMP", Range("C:C"), 0) + 3
-    'As it is possible to have multiple headers for the table, we search the last one
-    endRow = Range("C1:C100").Find(what:="Ref devis et DMP", searchorder:=xlByRows, searchdirection:=xlPrevious).Row + 3
-    endRow = Range("C" & endRow).End(xlDown).Row
-    Call refreshFormulasDependingOnArticlesListing(startRow, endRow)
-    
-    'Refreshing formulas based on the table of Appel de fond
-    startRow = Application.Match("Appel de fond", Range("F:F"), 0) + 2
-    'Let us move until the column "Base" before looking at the end. Indeed, the Range.End excel
-    'function is mislead by the merged cell. Therefore we pick the first "safe" place in which we can run it
-    endRow = Range("I" & startRow).End(xlDown).Row
-    
-    'Refreshing the formulas of taxe d'ameublement of current invoice
-    Call refreshTaxeDAmeublemnentOfCurrentInvoice(startRow, endRow)
-    Call refreshFormulasDependingOnAppelDeFondTable(startRow, endRow)
-    
-    'Refreshing the formulas based on the table Taxe d'ameublement
-    startRow = Application.Match("Aggrégation de la taxe d'ameublement", Range("Z:Z"), 0) + 3
-    endRow = Range("Z" & startRow).End(xlDown).Row
-    Call refreshFormulasDependingOnTaxeDAmeublementTable(startRow, endRow)
-    
-    'Refreshing the formulas based on the table Factures d'acompte
-    startRow = Range("C1:D1000").Find(what:="Facture d'acompte :", searchorder:=xlByRows).Row
-    endRow = Range("C1:D1000").Find(what:="Facture d'acompte :", searchorder:=xlByRows, searchdirection:=xlPrevious).Row + 1
-    Call refreshFormulasDependingOnFacturesDAcomptesTable(startRow, endRow)
-    
-    'Refreshing the rest of the range names
-    
+    Range("TotalTaxeDAmeublementFacture").Formula = formulaTaxeDAmeublement
 End Sub
 
 Sub updateReferenceOnUserCommand(rangeName As String, rngUpdated As Range, referenceName As String)
