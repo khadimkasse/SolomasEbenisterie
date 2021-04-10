@@ -37,7 +37,7 @@ Sub addOneLineToClientIdentification()
     'Getting the last row of the client identification part or the invoice details part
     startRow = Range("ClientDetails").Row
     startRowInvoiceDetails = Range("InvoiceDetails").Row
-    endRow = Range("ClientDetails").Row + Range("ClientDetails").Rows.Count - 1 ' Application.Match("Adresse 1", Range("H1:H18"), 0)
+    endRow = Range("ClientDetails").Row + Range("ClientDetails").Rows.Count - 1
     endRowInvoiceDetails = Range("InvoiceDetails").Row + Range("InvoiceDetails").Rows.Count - 1
     endRow = WorksheetFunction.Max(endRow, endRowInvoiceDetails)
     lineInsert = endRow + 1
@@ -52,7 +52,7 @@ Sub addOneLineToInvoiceDetails()
     'Getting the last row of the client identification part or the invoice details part
     startRow = Range("InvoiceDetails").Row
     startRowClientDetails = Range("ClientDetails").Row
-    endRow = Range("InvoiceDetails").Row + Range("InvoiceDetails").Rows.Count - 1 ' Application.Match("Adresse 1", Range("H1:H18"), 0)
+    endRow = Range("InvoiceDetails").Row + Range("InvoiceDetails").Rows.Count - 1
     endRowClientDetails = Range("ClientDetails").Row + Range("ClientDetails").Rows.Count - 1
     endRow = WorksheetFunction.Max(endRow, endRowClientDetails)
     lineInsert = endRow + 1
@@ -218,10 +218,20 @@ Sub refreshNamedRanges()
    
     'Devis et DMP on RECAPITULATIF
     recapPosition = Range("recapPosition").Row
-    startRowRecap = recapPosition + Application.Match("Selon devis", Range("C" & recapPosition & ":C" & recapPosition + 100), 0)
+    startRowRecap = recapPosition + Application.Match("Selon devis", Range("C" & recapPosition & ":C" & recapPosition + 100), 0) - 1 ' Why do we need here - 1 ?
     endRowRecap = Range("C" & startRowRecap).End(xlDown).Row
     Set rngUpdated = Range("'template'!$D$" & startRowRecap & ":$D$" & endRowRecap)
     Call updateReferenceOnUserCommand("DevisEtDMPRecap", rngUpdated, "Devis et DMP du Recapitulatif")
+    'We check if the number of devis and DMP is the same compared to the ones on first page. If not we raise an alert and ask to delete the extra lines
+    nbLinesDevisAndDMPs = endRow - startRow + 1
+    nbLinesDevisAndDMPsRecap = endRowRecap - startRowRecap + 1
+    If nbLinesDevisAndDMPsRecap > nbLinesDevisAndDMPs Then
+        If MsgBox("Le nombre de devis renseigné dans le récapitulatif semble éroné. Voulez-vous supprimer les ligne en trop ?", vbYesNo, "Demande de confirmation") = vbYes Then
+            Range("A" & startRowRecap + nbLinesDevisAndDMPsRecap - 1 & ":S" & endRowRecap).Delete Shift:=xlUp
+            MsgBox "Les lignes en trop dans le récapitulatif on bien été supprimées !"
+        End If
+    End If
+
     
     'Articles listing
     'The " + 3" is to avoid the problems brought by the merged cells
@@ -261,7 +271,7 @@ Sub refreshNamedRanges()
     Set rngUpdated = Range("'template'!$R$" & startRow & ":$S$" & endRow)
     Call updateReferenceOnUserCommand("RestantsDusSurFacturesAppeles", rngUpdated, "Montants restants sur Factures appelees")
 
-    'Table d'aggregation de la taxe d'ameublement 
+    'Table d'aggregation de la taxe d'ameublement
     'Getting the position of the table "Aggrégation de la taxe d'ameublement"
     startRow = Application.Match("Aggrégation de la taxe d'ameublement", Range("Z:Z"), 0) + 3
     endRow = Range("Z" & startRow).End(xlDown).Row
@@ -280,3 +290,4 @@ Sub refreshNamedRanges()
     Set rngUpdated = Range("'template'!$" & startRow & ":$" & endRow)
     Call updateReferenceOnUserCommand("impression_des_titres", rngUpdated, "Impression des titres")
 End Sub
+
