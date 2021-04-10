@@ -144,8 +144,8 @@ End Sub
 Sub addOneAppelDeFond()
     'Getting the last line in which he have an "appel de fond".
     'We take the named range MontantsTVAAppeles as it is one of the most used of that table
-    startRow = Range("MontantsTVAAppeles").Row 
-    endRow = Range("MontantsTVAAppeles").Row + Range("MontantsTVAAppeles").Rows.Count - 1 
+    startRow = Range("MontantsTVAAppeles").Row
+    endRow = Range("MontantsTVAAppeles").Row + Range("MontantsTVAAppeles").Rows.Count - 1
     lineInsert = endRow + 1
     'Beware: we have two lines to add here
     Call addLinesToDoubleRowTables(endRow, lineInsert, "F", "O")
@@ -158,13 +158,14 @@ Sub addOneAppelDeFond()
     Range("'template'!$K$" & startRow & ":$K$" & endRow + 2).Name = "TauxTVAAppeles"
     Range("'template'!$L$" & startRow & ":$M$" & endRow + 2).Name = "MontantsTVAAppeles"
     Range("'template'!$N$" & startRow & ":$O$" & endRow + 2).Name = "MontantsTTCAppeles"
-
+    'We check if the table containig the taxe d'ameublement is well calculated. If not we refresh it.
+    Call refreshToTaxeDAmeublementTable
 End Sub
 
 Sub addOneInvoiceToRecapitulatif()
     'Getting the starting and ending row of the "Factures d'acompte"
-    startRow = Range("MontantsFacturesAppeles").Row 
-    endRow =  Range("MontantsFacturesAppeles").Row + Range("MontantsFacturesAppeles").Rows.Count - 1 ' Range("C1:D1000").Find(what:="Facture d'acompte :", searchorder:=xlByRows, searchdirection:=xlPrevious).Row + 1
+    startRow = Range("MontantsFacturesAppeles").Row
+    endRow = Range("MontantsFacturesAppeles").Row + Range("MontantsFacturesAppeles").Rows.Count - 1  ' Range("C1:D1000").Find(what:="Facture d'acompte :", searchorder:=xlByRows, searchdirection:=xlPrevious).Row + 1
     lineInsert = endRow + 1
     'Beware: we have two lines to add here
     Call addLinesToDoubleRowTables(endRow, lineInsert, "C", "S")
@@ -176,56 +177,26 @@ Sub addOneInvoiceToRecapitulatif()
     Range("'template'!$J$" & startRow & ":$K$" & endRow + 2).Name = "MontantsPayesSurFacturesAppeles"
     Range("'template'!$R$" & startRow & ":$S$" & endRow + 2).Name = "RestantsDusSurFacturesAppeles"
 End Sub
-Private Sub oneArticleAdded(ByVal currentCell As Range, currentLine)
-    If currentCell.Address = "C" & currentLine Then
-        
-    End If
-End Sub
-Sub addLineToTaxeDAmeublementTable()
-    'Getting the position of the table "Aggrégation de la taxe d'ameublement"
-    startRow = Application.Match("Aggrégation de la taxe d'ameublement", Range("Z:Z"), 0) + 3
-    endRow = Range("Z" & startRow).End(xlDown).Row
-    'Testing whether the current devis references are all different or not
-    i = startRow
-    tableNeedsToBeErased = False
-    Do While i <= endRow
-        j = i + 1
-        Do While j <= endRow
-            If Range("Z" & i).Value = Range("Z" & j).Value Then
-                MsgBox ("La référence " & Range("Z" & i).Value & " apparait deux fois dans le tableau d'aggrégation. Le tableau va être réinitialisé.")
-                tableNeedsToBeErased = True
-            End If
-            j = j + 1
-        Loop
-        i = i + 1
-    Loop
-    If tableNeedsToBeErased Then
-        Range("Z" & startRow + 1 & ":AC" & endRow).Select
-        Selection.ClearContents
-        endRow = startRow
-    End If
-    'Looping through all the articles and comparing it to the entries in the Tablea d'aggrégation t decide whether we need an extra line or not
-    'Getting the starting row and the ending row of the articles listing
-    artStartRow = Application.Match("Ref devis et DMP", Range("C:C"), 0) + 3
-    artEndRow = Range("C" & startRow).End(xlDown).Row
-    thisDevisReferenceRow = startRow
-    For Each thisArticle In Range("C" & artStartRow & ":C" & artEndRow)
-        While thisDevisReferenceRow <= endRow
-            If thisArticle.Value = Range("Z" & thisDevisReferenceRow).Value Then
-                'The current devis exist in the agreagation table. We can then take another one
-                GoTo ContinueFor
-            End If
-            thisDevisReferenceRow = thisDevisReferenceRow + 1
+
+Sub refreshTaxeDAmeublementTable()
+    'The named range UniqueRefDevisEtDMPs should be the same length as the DevisEtDMPs one
+    'If not, the table have to be extended
+    If Range("UniqueRefDevisEtDMPs").Rows.Count <> Range("DevisEtDMPs").Count Then
+        startRow = Range("UniqueRefDevisEtDMPs").Row
+        endRowBeforeUpdate = Range("UniqueRefDevisEtDMPs").Row + Range("UniqueRefDevisEtDMPs").Rows.Count - 1
+        endRow = Range("UniqueRefDevisEtDMPs").Row + Range("DevisEtDMPs").Rows.Count - 1
+        Range("'template'!$Z$" & startRow & ":$Z$" & endRow).Name = "UniqueRefDevisEtDMPs"
+        Range("'template'!$AA$" & startRow & ":$AA$" & endRow).Name = "TaxeAmeublementN"
+        Range("'template'!$AB$" & startRow & ":$AB$" & endRow).Name = "TaxeAmeublementR"
+        'Copying the formulas to the lines we have to add
+        thisRow = endRowBeforeUpdate
+        While thisRow < endRow
+            Call copyFormulasFromLine(startRow, startRow, "AA", "AB", thisRow + 1)
+            thisRow = thisRow + 1
         Wend
-        'Saving the devis reference that is not present in the aggragation table
-        Call copyFormulasFromLine(startRow, startRow, "Z", "AC", endRow + 1)
-        endRow = endRow + 1
-        Range("Z" & endRow).Value = thisArticle.Value
-ContinueFor:
-    Next thisArticle
-    
-    Call refreshFormulasDependingOnTaxeDAmeublementTable(startRow, endRow)
+    End If
 End Sub
+
 Sub refreshFormulasDependingOnTaxeDAmeublementTable(startRow, endRow)
     Range("Z23").Value = "$Z$" & startRow & ":$AA$" & endRow
     Range("AA23").Value = "$AB$" & startRow & ":$AB$" & endRow
@@ -359,4 +330,3 @@ Sub refreshNamedRanges()
     Set rngUpdated = Range("'template'!$" & startRow & ":$" & endRow)
     Call updateReferenceOnUserCommand("impression_des_titres", rngUpdated, "Impression des titres")
 End Sub
-
