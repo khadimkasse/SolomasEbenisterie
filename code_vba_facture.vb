@@ -262,7 +262,7 @@ End Sub
 
 Sub updateReferenceOnUserCommand(rangeName As String, rngUpdated As Range, referenceName As String)
      If Not (Range(rangeName).Address = rngUpdated.Address) Then
-        If MsgBox("La référence de " & referenceName & " semble éronné. La bonne référence sembl être " & _
+        If MsgBox("La référence de " & referenceName & " semble éronné. La bonne référence semble être " & _
         rngUpdated.Address & " au lieu de l'actuel : " & Range(rangeName).Address & ". Voulez vous le mettre à jour automatiquement ?", vbYesNo, "Demande de confirmation") = vbYes Then
             rngUpdated.Name = rangeName
             MsgBox "La référence de " & referenceName & " a été mise à jour !"
@@ -321,6 +321,17 @@ Sub refreshNamedRanges()
     Call updateReferenceOnUserCommand("MontantsPayesSurFacturesAppeles", rngUpdated, "Montants payes sur Factures appelees")
     Set rngUpdated = Range("'template'!$R$" & startRow & ":$S$" & endRow)
     Call updateReferenceOnUserCommand("RestantsDusSurFacturesAppeles", rngUpdated, "Montants restants sur Factures appelees")
+
+    'Table d'aggregation de la taxe d'ameublement 
+    'Getting the position of the table "Aggrégation de la taxe d'ameublement"
+    startRow = Application.Match("Aggrégation de la taxe d'ameublement", Range("Z:Z"), 0) + 3
+    endRow = Range("Z" & startRow).End(xlDown).Row
+    Set rngUpdated = Range("'template'!$Z$" & startRow & ":$Z$" & endRow)
+    Call updateReferenceOnUserCommand("UniqueRefDevisEtDMPs", rngUpdated, "Références des devis et DMP dans la table d'aggrégation de la taxe d'ameublement")
+    Set rngUpdated = Range("'template'!$AA$" & startRow & ":$AA$" & endRow)
+    Call updateReferenceOnUserCommand("TaxeAmeublementN", rngUpdated, "Taxe d'ameublement N dans la table d'aggrégation de la taxe d'ameublement")
+    Set rngUpdated = Range("'template'!$AB$" & startRow & ":$AB$" & endRow)
+    Call updateReferenceOnUserCommand("TaxeAmeublementR", rngUpdated, "Taxe d'ameublement R dans la table d'aggrégation de la taxe d'ameublement")
 
     'Impression des titres
     startRow = Range("ClientDetails").Row
