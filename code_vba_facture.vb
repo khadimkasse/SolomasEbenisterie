@@ -39,12 +39,19 @@ Sub addOneLineToClientIdentification()
     startRowInvoiceDetails = Range("InvoiceDetails").Row
     endRow = Range("ClientDetails").Row + Range("ClientDetails").Rows.Count - 1
     endRowInvoiceDetails = Range("InvoiceDetails").Row + Range("InvoiceDetails").Rows.Count - 1
-    endRow = WorksheetFunction.Max(endRow, endRowInvoiceDetails)
-    lineInsert = endRow + 1
-    Call addOneLine(endRow, lineInsert, "H", "M")
+    'If the invoice details part is longer than the client identification one, we don't need to add any new lines
+    If endRowInvoiceDetails <= endRow Then 
+        lineInsert = endRow + 1
+        Call addOneLine(endRow, lineInsert, "H", "M")
+    Else
+        Range("H" & endRow & ":M" & endRow).Copy
+        Range("H" & endRow + 1).PasteSpecial _
+        Paste:=xlPasteFormats
+        'Emptying the clipboard
+        Application.CutCopyMode = False
+    End If
     'Refreshing the named ranges ClientDetails, InvoiceDetails and impression_des_titres
     Range("'template'!$H$" & startRow & ":$M$" & endRow + 1).Name = "ClientDetails"
-    Range("'template'!$P$" & startRowInvoiceDetails & ":$S$" & endRow + 1).Name = "InvoiceDetails"
     Range("'template'!$" & startRow & ":$" & endRow + 1).Name = "impression_des_titres"
 End Sub
 
@@ -54,12 +61,20 @@ Sub addOneLineToInvoiceDetails()
     startRowClientDetails = Range("ClientDetails").Row
     endRow = Range("InvoiceDetails").Row + Range("InvoiceDetails").Rows.Count - 1
     endRowClientDetails = Range("ClientDetails").Row + Range("ClientDetails").Rows.Count - 1
-    endRow = WorksheetFunction.Max(endRow, endRowClientDetails)
     lineInsert = endRow + 1
-    Call addOneLine(endRow, lineInsert, "P", "S")
+    'If the client identification details part is longer than the invoice one, we don't need to add any new lines
+    If endRowClientDetails <= endRow Then 
+        lineInsert = endRow + 1
+        Call addOneLine(endRow, lineInsert, "P", "S")
+    Else
+        Range("P" & endRow & ":S" & endRow).Copy
+        Range("P" & endRow + 1).PasteSpecial _
+        Paste:=xlPasteFormats
+        'Emptying the clipboard
+        Application.CutCopyMode = False
+    End If
     'Refreshing the named ranges ClientDetails, InvoiceDetails and impression_des_titres
     Range("'template'!$P$" & startRow & ":$S$" & endRow + 1).Name = "InvoiceDetails"
-    Range("'template'!$H$" & startRowClientDetails & ":$M$" & endRow + 1).Name = "ClientDetails"
     Range("'template'!$" & startRowClientDetails & ":$" & endRow + 1).Name = "impression_des_titres"
 End Sub
 
@@ -68,14 +83,14 @@ Sub addOneLineOfDevisOrDMP()
     startRow = Range("DevisEtDMPs").Row
     endRow = Range("DevisEtDMPs").Row + Range("DevisEtDMPs").Rows.Count - 1
     lineInsert = endRow + 1
-    Call addOneLine(endRow, lineInsert, "C", "H")
+    Call addOneLine(endRow, lineInsert, "C", "J")
     'Getting the same content on Recapitulatif
     startRowRecap = Range("DevisEtDMPRecap").Row
     endRowRecap = Range("DevisEtDMPRecap").Row + Range("DevisEtDMPRecap").Rows.Count - 1
     lineInsertRecap = endRowRecap + 1
-    Call addOneLine(endRowRecap, lineInsertRecap, "C", "H")
+    Call addOneLine(endRowRecap, lineInsertRecap, "C", "J")
     'Replicate the formulas of the previous line
-    Call copyFormulasFromLine(endRowRecap, endRowRecap, "C", "H", endRowRecap + 1)
+    Call copyFormulasFromLine(endRowRecap, endRowRecap, "C", "J", endRowRecap + 1)
     'Updating the DevisEtDMP range
     Range("'template'!$D$" & startRow & ":$D$" & endRow + 1).Name = "DevisEtDMPs"
     Range("'template'!$D$" & startRowRecap & ":$D$" & endRowRecap + 1).Name = "DevisEtDMPRecap"
@@ -144,7 +159,7 @@ Sub addOneAppelDeFond()
     Range("'template'!$N$" & startRow & ":$O$" & endRow + 2).Name = "MontantsTTCAppeles"
     'We check if the table containig the taxe d'ameublement is well calculated. If not we refresh it.
     Call refreshTaxeDAmeublementTable
-    Call refreshTaxeDAmeublemnentOfCurrentInvoice(startRow, endRow + 2)
+    Call refreshTaxeDAmeublemnentOfCurrentInvoice()
 End Sub
 
 Sub addOneInvoiceToRecapitulatif()
@@ -181,7 +196,9 @@ Sub refreshTaxeDAmeublementTable()
     End If
 End Sub
 
-Sub refreshTaxeDAmeublemnentOfCurrentInvoice(startRow, endRow)
+Sub refreshTaxeDAmeublemnentOfCurrentInvoice()
+    startRow = Range("MontantsTVAAppeles").Row
+    endRow = Range("MontantsTVAAppeles").Row + Range("MontantsTVAAppeles").Rows.Count - 1
     i = startRow
     formulaTaxeDAmeublement = "=IF(TaxeAmeublementExiste=""Y"","
     formulaTaxeDAmeublement = formulaTaxeDAmeublement & _
@@ -201,8 +218,8 @@ End Sub
 
 Sub updateReferenceOnUserCommand(rangeName As String, rngUpdated As Range, referenceName As String)
      If Not (Range(rangeName).Address = rngUpdated.Address) Then
-        If MsgBox("La référence de " & referenceName & " semble éronné. La bonne référence semble être " & _
-        rngUpdated.Address & " au lieu de l'actuel : " & Range(rangeName).Address & ". Voulez vous le mettre à jour automatiquement ?", vbYesNo, "Demande de confirmation") = vbYes Then
+        If MsgBox("La référence de " & referenceName & " semble éronnée. La bonne référence semble être " & _
+        rngUpdated.Address & " au lieu de l'actuel : " & Range(rangeName).Address & ". Voulez-vous le mettre à jour maintenant ?", vbYesNo, "Demande de confirmation") = vbYes Then
             rngUpdated.Name = rangeName
             MsgBox "La référence de " & referenceName & " a été mise à jour !"
         End If
@@ -226,9 +243,9 @@ Sub refreshNamedRanges()
     nbLinesDevisAndDMPs = endRow - startRow + 1
     nbLinesDevisAndDMPsRecap = endRowRecap - startRowRecap + 1
     If nbLinesDevisAndDMPsRecap > nbLinesDevisAndDMPs Then
-        If MsgBox("Le nombre de devis renseigné dans le récapitulatif semble éroné. Voulez-vous supprimer les ligne en trop ?", vbYesNo, "Demande de confirmation") = vbYes Then
+        If MsgBox("Le nombre de devis renseigné dans le récapitulatif semble éroné. Voulez-vous supprimer les lignes en trop ?", vbYesNo, "Demande de confirmation") = vbYes Then
             Range("A" & startRowRecap + nbLinesDevisAndDMPsRecap - 1 & ":S" & endRowRecap).Delete Shift:=xlUp
-            MsgBox "Les lignes en trop dans le récapitulatif on bien été supprimées !"
+            MsgBox "Les lignes en trop dans le récapitulatif ont bien été supprimées !"
         End If
     End If
 

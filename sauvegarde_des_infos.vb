@@ -4,9 +4,7 @@ Sub saveInvoiceInformation()
     Dim currentLine As Integer, invoiceNumber As String
     Dim ClientDetailsExport As Range
     Set ClientDetailsExport = Sheets("informations enregistrées").Range("ClientDetailsExport")
-    currentLine = Sheets("informations enregistrées").Range("ClientDetailsExport").Rows.Count + 1 'Sheets("informations enregistrées").Range("A10000").End(xlUp).Row + 1
-    'Dim desiredSheetName as String
-    'desiredSheetName = Application.InputBox("Selectionner une cellule de la facture : ", "Prompt for selecting target sheet name", Type:=8).Worksheet.Name
+    currentLine = Sheets("informations enregistrées").Range("ClientDetailsExport").Rows.Count + 1
     invoiceNumber = Range("invoiceNumber").Value
     'If the current invoice has already been saved, currentLine has to refer to it
     Dim savedInvoice As Range
@@ -19,6 +17,7 @@ Sub saveInvoiceInformation()
     End If
 
     'Saving the invoice reference
+    Sheets("informations enregistrées").Range("A" & currentLine).Formula = "=$A" & currentLine - 1 & "+1"
     Sheets("informations enregistrées").Range("B" & currentLine).Value = invoiceNumber
 
     'Saving client informations
@@ -42,14 +41,16 @@ Sub saveInvoiceInformation()
             Set colClientInfosColumn = ClientDetailsExport.Rows(1).Find( _
                 what:=clientInfoLibelle, searchorder:=xlByColumns, searchdirection:=xlPrevious)
             If Not colClientInfosColumn Is Nothing Then
-                colClientInfosExport = colClientInfosColumn.Column
+            'Beware the colClientInfosExport is relative to the ClientDetailsExport range
+                colClientInfosExport = colClientInfosColumn.Column - ClientDetailsExport.Column + 1
                 ClientDetailsExport.Rows(currentLine).Columns(colClientInfosExport).Value = clientInfoValue
-            Else   
+            Else
                 'When the libelle is not present in the colClientInfosExport range header, we add a column at the end of the range with the given libelle
                 Dim lastColumnClientInfoExport As Integer
-                lastColumnClientInfoExport = clientInfo.Column + clientInfo.Columns.Count - 1
-                Worksheets("informations enregistrées").Columns(lastColumnClientInfoExport).Insert Shift:=xlToRight
-                colClientInfosExport = lastColumnClientInfoExport
+                lastColumnClientInfoExport = ClientDetailsExport.Column + ClientDetailsExport.Columns.Count - 1
+                Worksheets("informations enregistrées").Columns(lastColumnClientInfoExport + 1).Insert Shift:=xlToRight
+                colClientInfosExport = ClientDetailsExport.Columns.Count + 1
+                Set ClientDetailsExport = ClientDetailsExport.Resize(, colClientInfosExport)
                 ClientDetailsExport.Rows(1).Columns(colClientInfosExport).Value = clientInfoLibelle
                 ClientDetailsExport.Rows(currentLine).Columns(colClientInfosExport).Value = clientInfoValue
             End If
@@ -59,4 +60,11 @@ Sub saveInvoiceInformation()
         colClientInfosExport = colClientInfosExport + 1
     Wend
     ClientDetailsExport.Name = "ClientDetailsExport"
+
+    'Once the invoice has been saved, we cannot update the reference of it 
+    'Therefore, we change the value of the range invoiceNumber to keep the values as fixed and not depending on a formula
+    Range("invoiceNumber").Copy
+    Range("invoiceNumber").PasteSpecial _
+    Paste:=xlPasteValues
 End Sub
+
