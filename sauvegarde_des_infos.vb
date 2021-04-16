@@ -16,12 +16,12 @@ Sub saveInvoiceInformation()
         Set ClientDetailsExport = ClientDetailsExport.Resize(currentLine)
     End If
 
-    'Saving the invoice reference
+    '***************************************** Saving the invoice reference ***************************************** 
     Sheets("informations enregistrées").Range("A" & currentLine).Formula = "=$A" & currentLine - 1 & "+1"
     Sheets("informations enregistrées").Range("B" & currentLine).Value = invoiceNumber
 
-    'Saving client informations
-    'Looping through all the details of a clinet identification. To bypass the merged cells, we go from one line to another by using the Offset() function
+    '***************************************** Saving client informations ***************************************** 
+    'Looping through all the details of a client identification. To bypass the merged cells, we go from one line to another by using the Offset() function
     Dim clientInfo As Range, clientInfoRow As Integer
     Dim colClientInfosExport As Integer
     clientInfoRow = 1
@@ -61,10 +61,81 @@ Sub saveInvoiceInformation()
     Wend
     ClientDetailsExport.Name = "ClientDetailsExport"
 
+    '***************************************** Saving the devis and DMPs **************************************
+    Dim DevisExport, DMPExport As Range 
+    Dim devisOrDMP As Range, devisOrDMPRow As Integer
+    Dim colDevisOrDMPExport As Integer
+    devisOrDMPRow = 1
+    Set DevisExport = Sheets("informations enregistrées").Range("DevisExport")
+    Set DMPExport = Sheets("informations enregistrées").Range("DMPExport")
+    Set devisOrDMP = Range("DevisEtDMPs").Rows(devisOrDMPRow)
+    colDevisExport = 1
+    colDMPExport = 1
+    While devisOrDMP.Row <= Range("DevisEtDMPs").Rows.Count
+        Dim selonDevisOrSelon As String, refDevis As String, dateDevis As Long, montantDevis As Double
+        selonDevisOrSelon = devisOrDMP.Columns(1).Value
+        refDevis = devisOrDMP.Columns(1).Offset(0, 1).Value
+        dateDevis = devisOrDMP.Columns(1).Offset(0, 2).Value
+        montantDevis = devisOrDMP.Columns(1).Offset(0, 4).Value
+        If selonDevisOrSelon = "Selon devis" Then
+            Dim lastColumDevisExport As Integer
+            lastColumDevisExport = DevisExport.Column + DevisExport.Columns.Count - 1
+            'If the columns corresponding to devis on the export page are not completely filled, we use the current one
+            If colDevisExport <= lastColumDevisExport
+                DevisExport.Rows(currentLine).Column(colDevisExport).Value = refDevis
+                DevisExport.Rows(currentLine).Column(colDevisExport + 1).Value = dateDevis
+                DevisExport.Rows(currentLine).Column(colDevisExport + 2).Value = montantDevis
+            Else
+                'We have used all the available columns designed for the Devis. Then we insert 3 new columns and affect them to the range DevisExport
+                Worksheets("informations enregistrées").Columns(lastColumDevisExport + 3 & ":" & lastColumDevisExport + 5).Insert Shift:=xlToRight
+                lastColumDevisExport = lastColumDevisExport + 3
+                Set DevisExport = DevisExport.Resize(, lastColumDevisExport)
+                'Setting the right index for the newly created columns
+                Dim libelleDevis As Integer
+                libelleDevis = "Devis " & lastColumDevisExport / 3 + 1
+                'Merging the 3 first lines and setting the title 
+                Sheets("informations enregistrées").Range(Cells(1, lastColumDevisExport), Cells(1, lastColumDevisExport + 2)).Copy
+                DevisExport.Rows(lastColumDevisExport - 2).PasteSpecial _
+                Paste:=xlPasteFormats
+                Application.CutCopyMode = False
+                DevisExport.Rows(currentLine)Columns(lastColumDevisExport - 2).Value = libelleDevis
+            End If
+        Else 
+            Dim lastColumDMPExport As Integer
+            lastColumDMPExport = DMPExport.Column + DMPExport.Columns.Count - 1
+             'If the columns corresponding to DMP on the export page are not completely filled, we use the current one
+            If colDMPExport <= lastColumDMPExport
+                DMPExport.Rows(currentLine).Column(colDMPExport).Value = refDevis
+                DMPExport.Rows(currentLine).Column(colDMPExport + 1).Value = dateDevis
+                DMPExport.Rows(currentLine).Column(colDMPExport + 2).Value = montantDevis
+            Else
+                'We have used all the available columns designed for the Devis. Then we insert 3 new columns and affect them to the range DMPExport
+                Worksheets("informations enregistrées").Columns(lastColumDMPExport + 3 & ":" & lastColumDMPExport + 5).Insert Shift:=xlToRight
+                lastColumDMPExport = lastColumDMPExport + 3
+                Set DMPExport = DMPExport.Resize(, lastColumDMPExport)
+                'Setting the right index for the newly created columns
+                Dim libelleDMP As Integer
+                libelleDMP = "DMP " & lastColumDMPExport / 3 + 1
+                'Merging the 3 first lines and setting the title 
+                Sheets("informations enregistrées").Range(Cells(1, lastColumDMPExport), Cells(1, lastColumDMPExport + 2)).Copy
+                DMPExport.Rows(lastColumDMPExport - 2).PasteSpecial _
+                Paste:=xlPasteFormats
+                Application.CutCopyMode = False
+                DMPExport.Rows(currentLine)Columns(lastColumDMPExport - 2).Value = libelleDMP
+            End If
+            colDMPExport = colDMPExport + 3
+        End If
+        devisOrDMP = Range("DevisEtDMPs").Rows(devisOrDMPRow).Columns(1).Offset(1, 0).Row
+        Set devisOrDMP = Range("DevisEtDMPs").Rows(clientInfoRow)
+    Wend
+    DevisExport.Name = "DevisExport"
+    DMPExport.Name = "DMPExport"
+
     'Once the invoice has been saved, we cannot update the reference of it 
     'Therefore, we change the value of the range invoiceNumber to keep the values as fixed and not depending on a formula
     Range("invoiceNumber").Copy
     Range("invoiceNumber").PasteSpecial _
     Paste:=xlPasteValues
+    Application.CutCopyMode = False
 End Sub
 
