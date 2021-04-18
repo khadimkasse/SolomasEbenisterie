@@ -94,7 +94,8 @@ Sub addOneLineOfDevisOrDMP()
     'Updating the DevisEtDMP range
     Range("'template'!$D$" & startRow & ":$D$" & endRow + 1).Name = "DevisEtDMPs"
     Range("'template'!$D$" & startRowRecap & ":$D$" & endRowRecap + 1).Name = "DevisEtDMPRecap"
-    Range("C" & endLine + 1).Select
+    Range("C" & endRow + 1).Value = Range("C" & endRow).Value
+    Range("C" & endRow + 1).Select
 End Sub
 
 Sub addOneArticle()

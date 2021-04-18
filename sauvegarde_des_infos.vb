@@ -1,6 +1,7 @@
 Option Explicit
 
 Sub saveInvoiceInformation()
+    Application.ScreenUpdating = False
     Dim currentLine As Integer, invoiceNumber As String
     Dim ClientDetailsExport As Range
     Set ClientDetailsExport = Sheets("informations enregistrées").Range("ClientDetailsExport")
@@ -11,16 +12,18 @@ Sub saveInvoiceInformation()
     Set savedInvoice = Sheets("informations enregistrées").Range("B1:B10000").Find(what:=invoiceNumber, searchorder:=xlByRows)
     If Not savedInvoice Is Nothing Then
         currentLine = savedInvoice.Row
+        'We delete the content of the line to avoid keeping information that were deleted from the invoice if any
+        ClientDetailsExport.Rows(currentLine).ClearContents
     Else
         'We add one line to the export
         Set ClientDetailsExport = ClientDetailsExport.Resize(currentLine)
     End If
 
-    '***************************************** Saving the invoice reference ***************************************** 
+    '***************************************** Saving the invoice reference *****************************************
     Sheets("informations enregistrées").Range("A" & currentLine).Formula = "=$A" & currentLine - 1 & "+1"
     Sheets("informations enregistrées").Range("B" & currentLine).Value = invoiceNumber
 
-    '***************************************** Saving client informations ***************************************** 
+    '***************************************** Saving client informations *****************************************
     'Looping through all the details of a client identification. To bypass the merged cells, we go from one line to another by using the Offset() function
     Dim clientInfo As Range, clientInfoRow As Integer
     Dim colClientInfosExport As Integer
@@ -62,80 +65,92 @@ Sub saveInvoiceInformation()
     ClientDetailsExport.Name = "ClientDetailsExport"
 
     '***************************************** Saving the devis and DMPs **************************************
-    Dim DevisExport, DMPExport As Range 
+    Dim DevisExport, DMPsExport As Range
     Dim devisOrDMP As Range, devisOrDMPRow As Integer
-    Dim colDevisOrDMPExport As Integer
+    Dim colDevisExport As Integer, colDMPExport As Integer
     devisOrDMPRow = 1
     Set DevisExport = Sheets("informations enregistrées").Range("DevisExport")
-    Set DMPExport = Sheets("informations enregistrées").Range("DMPExport")
+    Set DMPsExport = Sheets("informations enregistrées").Range("DMPsExport")
     Set devisOrDMP = Range("DevisEtDMPs").Rows(devisOrDMPRow)
     colDevisExport = 1
     colDMPExport = 1
-    While devisOrDMP.Row <= Range("DevisEtDMPs").Rows.Count
+    While devisOrDMP.Row <= Range("DevisEtDMPs").Row + Range("DevisEtDMPs").Rows.Count - 1
         Dim selonDevisOrSelon As String, refDevis As String, dateDevis As Long, montantDevis As Double
-        selonDevisOrSelon = devisOrDMP.Columns(1).Value
-        refDevis = devisOrDMP.Columns(1).Offset(0, 1).Value
-        dateDevis = devisOrDMP.Columns(1).Offset(0, 2).Value
-        montantDevis = devisOrDMP.Columns(1).Offset(0, 4).Value
+        selonDevisOrSelon = devisOrDMP.Columns(1).Offset(0, -1).Value
+        refDevis = devisOrDMP.Columns(1).Value
+        dateDevis = devisOrDMP.Columns(1).Offset(0, 1).Value
+        montantDevis = devisOrDMP.Columns(1).Offset(0, 4).Value 'Why 4 here. Shouldn't it be 3 ?
         If selonDevisOrSelon = "Selon devis" Then
             Dim lastColumDevisExport As Integer
             lastColumDevisExport = DevisExport.Column + DevisExport.Columns.Count - 1
             'If the columns corresponding to devis on the export page are not completely filled, we use the current one
-            If colDevisExport <= lastColumDevisExport
-                DevisExport.Rows(currentLine).Column(colDevisExport).Value = refDevis
-                DevisExport.Rows(currentLine).Column(colDevisExport + 1).Value = dateDevis
-                DevisExport.Rows(currentLine).Column(colDevisExport + 2).Value = montantDevis
+            If colDevisExport <= DevisExport.Columns.Count Then
+                DevisExport.Rows(currentLine).Columns(colDevisExport).Value = refDevis
+                DevisExport.Rows(currentLine).Columns(colDevisExport + 1).Value = dateDevis
+                DevisExport.Rows(currentLine).Columns(colDevisExport + 2).Value = montantDevis
             Else
                 'We have used all the available columns designed for the Devis. Then we insert 3 new columns and affect them to the range DevisExport
-                Worksheets("informations enregistrées").Columns(lastColumDevisExport + 3 & ":" & lastColumDevisExport + 5).Insert Shift:=xlToRight
+                Worksheets("informations enregistrées").Columns(lastColumDevisExport + 1).Resize(, 3).Insert Shift:=xlToRight
                 lastColumDevisExport = lastColumDevisExport + 3
-                Set DevisExport = DevisExport.Resize(, lastColumDevisExport)
+                Set DevisExport = DevisExport.Resize(, DevisExport.Columns.Count + 3)
                 'Setting the right index for the newly created columns
-                Dim libelleDevis As Integer
-                libelleDevis = "Devis " & lastColumDevisExport / 3 + 1
-                'Merging the 3 first lines and setting the title 
-                Sheets("informations enregistrées").Range(Cells(1, lastColumDevisExport), Cells(1, lastColumDevisExport + 2)).Copy
-                DevisExport.Rows(lastColumDevisExport - 2).PasteSpecial _
+                Dim libelleDevis As String
+                libelleDevis = "Devis " & DevisExport.Columns.Count / 3
+                'Merging the 3 first lines and setting the title
+                DevisExport.Rows(1).Columns(DevisExport.Columns.Count - 2).PasteSpecial _
                 Paste:=xlPasteFormats
                 Application.CutCopyMode = False
-                DevisExport.Rows(currentLine)Columns(lastColumDevisExport - 2).Value = libelleDevis
+                DevisExport.Rows(1).Columns(DevisExport.Columns.Count - 2).Value = libelleDevis
+                DevisExport.Rows(currentLine).Columns(colDevisExport).Value = refDevis
+                DevisExport.Rows(currentLine).Columns(colDevisExport + 1).Value = dateDevis
+                DevisExport.Rows(currentLine).Columns(colDevisExport + 2).Value = montantDevis
             End If
-        Else 
+            colDevisExport = colDevisExport + 3
+        Else
             Dim lastColumDMPExport As Integer
-            lastColumDMPExport = DMPExport.Column + DMPExport.Columns.Count - 1
+            lastColumDMPExport = DMPsExport.Column + DMPsExport.Columns.Count - 1
              'If the columns corresponding to DMP on the export page are not completely filled, we use the current one
-            If colDMPExport <= lastColumDMPExport
-                DMPExport.Rows(currentLine).Column(colDMPExport).Value = refDevis
-                DMPExport.Rows(currentLine).Column(colDMPExport + 1).Value = dateDevis
-                DMPExport.Rows(currentLine).Column(colDMPExport + 2).Value = montantDevis
+            If colDMPExport <= DMPsExport.Columns.Count Then
+                DMPsExport.Rows(currentLine).Columns(colDMPExport).Value = refDevis
+                DMPsExport.Rows(currentLine).Columns(colDMPExport + 1).Value = dateDevis
+                DMPsExport.Rows(currentLine).Columns(colDMPExport + 2).Value = montantDevis
             Else
-                'We have used all the available columns designed for the Devis. Then we insert 3 new columns and affect them to the range DMPExport
-                Worksheets("informations enregistrées").Columns(lastColumDMPExport + 3 & ":" & lastColumDMPExport + 5).Insert Shift:=xlToRight
+                'We have used all the available columns designed for the DMPs. Then we insert 3 new columns and affect them to the range DMPsExport
+                Worksheets("informations enregistrées").Columns(lastColumDMPExport + 1).Resize(, 3).Insert Shift:=xlToRight
                 lastColumDMPExport = lastColumDMPExport + 3
-                Set DMPExport = DMPExport.Resize(, lastColumDMPExport)
+                Set DMPsExport = DMPsExport.Resize(, DMPsExport.Columns.Count + 3)
                 'Setting the right index for the newly created columns
-                Dim libelleDMP As Integer
-                libelleDMP = "DMP " & lastColumDMPExport / 3 + 1
-                'Merging the 3 first lines and setting the title 
-                Sheets("informations enregistrées").Range(Cells(1, lastColumDMPExport), Cells(1, lastColumDMPExport + 2)).Copy
-                DMPExport.Rows(lastColumDMPExport - 2).PasteSpecial _
+                Dim libelleDMP As String
+                libelleDMP = "DMP " & DMPsExport.Columns.Count / 3
+                'Merging the 3 first lines and setting the title
+                Sheets("informations enregistrées").Range(Cells(1, lastColumDMPExport - 5), Cells(1, lastColumDMPExport - 3)).Copy
+                Application.Union(DMPsExport.Rows(1).Columns(DMPsExport.Columns.Count - 5), DMPsExport.Rows(1).Columns(DMPsExport.Columns.Count - 4), DMPsExport.Rows(1).Columns(DMPsExport.Columns.Count - 3)).Copy
+                DMPsExport.Rows(1).Columns(DMPsExport.Columns.Count - 2).PasteSpecial _
                 Paste:=xlPasteFormats
                 Application.CutCopyMode = False
-                DMPExport.Rows(currentLine)Columns(lastColumDMPExport - 2).Value = libelleDMP
+                DMPsExport.Rows(1).Columns(DMPsExport.Columns.Count - 2).Value = libelleDMP
+                DMPsExport.Rows(currentLine).Columns(colDMPExport).Value = refDevis
+                DMPsExport.Rows(currentLine).Columns(colDMPExport + 1).Value = dateDevis
+                DMPsExport.Rows(currentLine).Columns(colDMPExport + 2).Value = montantDevis
             End If
             colDMPExport = colDMPExport + 3
         End If
-        devisOrDMP = Range("DevisEtDMPs").Rows(devisOrDMPRow).Columns(1).Offset(1, 0).Row
-        Set devisOrDMP = Range("DevisEtDMPs").Rows(clientInfoRow)
+        devisOrDMPRow = devisOrDMPRow + 1
+        Set devisOrDMP = Range("DevisEtDMPs").Rows(devisOrDMPRow)
     Wend
     DevisExport.Name = "DevisExport"
-    DMPExport.Name = "DMPExport"
+    DMPsExport.Name = "DMPsExport"
 
-    'Once the invoice has been saved, we cannot update the reference of it 
+    'Once the invoice has been saved, we cannot update the reference of it
     'Therefore, we change the value of the range invoiceNumber to keep the values as fixed and not depending on a formula
     Range("invoiceNumber").Copy
     Range("invoiceNumber").PasteSpecial _
     Paste:=xlPasteValues
     Application.CutCopyMode = False
+    Application.ScreenUpdating = True
 End Sub
+
+
+
+
 
