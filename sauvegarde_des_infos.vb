@@ -97,6 +97,7 @@ Sub saveInvoiceInformation()
                 Dim libelleDevis As String
                 libelleDevis = "Devis " & DevisExport.Columns.Count / 3
                 'Merging the 3 first lines and setting the title
+                Application.Union(DevisExport.Rows(1).Columns(DevisExport.Columns.Count - 5), DevisExport.Rows(1).Columns(DevisExport.Columns.Count - 4), DevisExport.Rows(1).Columns(DevisExport.Columns.Count - 3)).Copy
                 DevisExport.Rows(1).Columns(DevisExport.Columns.Count - 2).PasteSpecial _
                 Paste:=xlPasteFormats
                 Application.CutCopyMode = False
@@ -123,7 +124,6 @@ Sub saveInvoiceInformation()
                 Dim libelleDMP As String
                 libelleDMP = "DMP " & DMPsExport.Columns.Count / 3
                 'Merging the 3 first lines and setting the title
-                Sheets("informations enregistrées").Range(Cells(1, lastColumDMPExport - 5), Cells(1, lastColumDMPExport - 3)).Copy
                 Application.Union(DMPsExport.Rows(1).Columns(DMPsExport.Columns.Count - 5), DMPsExport.Rows(1).Columns(DMPsExport.Columns.Count - 4), DMPsExport.Rows(1).Columns(DMPsExport.Columns.Count - 3)).Copy
                 DMPsExport.Rows(1).Columns(DMPsExport.Columns.Count - 2).PasteSpecial _
                 Paste:=xlPasteFormats
@@ -148,9 +148,7 @@ Sub saveInvoiceInformation()
     Paste:=xlPasteValues
     Application.CutCopyMode = False
     Application.ScreenUpdating = True
+
+    '***************************************** Showing the display before printing (aperçu avant impression) **************************************
+    'ActiveSheet.PrintPreview
 End Sub
-
-
-
-
-
