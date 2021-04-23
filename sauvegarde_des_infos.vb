@@ -25,44 +25,11 @@ Sub saveInvoiceInformation()
 
     '***************************************** Saving client informations *****************************************
     'Looping through all the details of a client identification. To bypass the merged cells, we go from one line to another by using the Offset() function
-    Dim clientInfo As Range, clientInfoRow As Integer
-    Dim colClientInfosExport As Integer
-    clientInfoRow = 1
-    Set clientInfo = Range("ClientDetails").Rows(clientInfoRow)
-    colClientInfosExport = 1
-    While clientInfo.Row <= Range("ClientDetails").Rows.Count
-        Dim clientInfoLibelle As String, clientInfoValue As String
-        clientInfoLibelle = clientInfo.Columns(1).Value
-        clientInfoValue = clientInfo.Columns(1).Offset(0, 1).Value
-        'If the clientInfoLibelle matches with the header of the current column on the sheet informations enregistrees, we export the value on the table
-        If clientInfoLibelle = ClientDetailsExport.Rows(1).Columns(colClientInfosExport).Value Then
-            ClientDetailsExport.Rows(currentLine).Columns(colClientInfosExport).Value = clientInfoValue
-        Else
-            'We search the clientInfoLibelle among the headers of the ClientDetailsExport named range. If it is present, we set colClientInfosExport to the corresponding column
-            'and then we export the clientInfoValue there
-            Dim colClientInfosColumn As Range
-            Set colClientInfosColumn = ClientDetailsExport.Rows(1).Find( _
-                what:=clientInfoLibelle, searchorder:=xlByColumns, searchdirection:=xlPrevious)
-            If Not colClientInfosColumn Is Nothing Then
-            'Beware the colClientInfosExport is relative to the ClientDetailsExport range
-                colClientInfosExport = colClientInfosColumn.Column - ClientDetailsExport.Column + 1
-                ClientDetailsExport.Rows(currentLine).Columns(colClientInfosExport).Value = clientInfoValue
-            Else
-                'When the libelle is not present in the colClientInfosExport range header, we add a column at the end of the range with the given libelle
-                Dim lastColumnClientInfoExport As Integer
-                lastColumnClientInfoExport = ClientDetailsExport.Column + ClientDetailsExport.Columns.Count - 1
-                Worksheets("informations enregistrées").Columns(lastColumnClientInfoExport + 1).Insert Shift:=xlToRight
-                colClientInfosExport = ClientDetailsExport.Columns.Count + 1
-                Set ClientDetailsExport = ClientDetailsExport.Resize(, colClientInfosExport)
-                ClientDetailsExport.Rows(1).Columns(colClientInfosExport).Value = clientInfoLibelle
-                ClientDetailsExport.Rows(currentLine).Columns(colClientInfosExport).Value = clientInfoValue
-            End If
-        End If
-        clientInfoRow = Range("ClientDetails").Rows(clientInfoRow).Columns(1).Offset(1, 0).Row
-        Set clientInfo = Range("ClientDetails").Rows(clientInfoRow)
-        colClientInfosExport = colClientInfosExport + 1
-    Wend
-    ClientDetailsExport.Name = "ClientDetailsExport"
+    Dim rangeInClientDetailsKey As Range, rangeInClientDetailsValue1 As Range, rangeInClientDetails As Range
+    Set rangeInClientDetailsKey = Range("ClientDetails").Columns(1)
+    Set rangeInClientDetailsValue1 = Range("ClientDetails").Columns(4)
+    Set rangeInClientDetails = Range(rangeInClientDetailsKey, rangeInClientDetailsValue1)
+    Call exportReferencesFromRange(rangeInClientDetails, "ClientDetailsExport", currentLine)
 
     '***************************************** Saving the devis and DMPs **************************************
     Dim DevisExport, DMPsExport As Range
@@ -152,3 +119,53 @@ Sub saveInvoiceInformation()
     '***************************************** Showing the display before printing (aperçu avant impression) **************************************
     'ActiveSheet.PrintPreview
 End Sub
+
+'rangeIn : {key, value1, value2, value3, ....}
+Sub exportReferencesFromRange(rangeIn As Range, rangeExportStr As String, currentLine As Integer)
+    Dim rangeExport As Range
+    Set rangeExport = Sheets("informations enregistrées").Range(rangeExportStr)
+    Dim rangeInSubRow As Range, rowRangeInSubRow As Integer, colRangeExport As Integer
+    
+    rowRangeInSubRow = 1
+    Set rangeInSubRow = rangeIn.Rows(rowRangeInSubRow)
+    colRangeExport = 1
+
+    While rangeInSubRow.Row <= rangeIn.Row + rangeIn.Rows.Count - 1
+        Dim lastColumnRangeExport As Integer
+        lastColumnRangeExport = rangeExport.Column + rangeExport.Columns.Count - 1
+        'If the key of the values we are about to add doesn't exist in the export,
+        'we insert as much columns as needed
+        If rangeInSubRow.Columns(1).Value <> rangeExport.Rows(1).Columns(colRangeExport).Value Then
+            Dim matchingColInExport As Range
+            Set matchingColInExport = rangeExport.Rows(1).Find( _
+                            what:=rangeInSubRow.Rows(1).Columns(1).Value, searchorder:=xlByColumns)
+            If Not matchingColInExport Is Nothing Then
+                colRangeExport = matchingColInExport.Column
+            Else
+                Dim nbColumnsToAdd As Integer
+                nbColumnsToAdd = rangeInSubRow.Columns.Count
+                Worksheets("informations enregistrées").Columns(lastColumnRangeExport + 1).Resize(, nbColumnsToAdd).Insert Shift:=xlToRight
+                lastColumnRangeExport = lastColumnRangeExport + nbColumnsToAdd
+                Set rangeExport = rangeExport.Resize(, rangeExport.Columns.Count + nbColumnsToAdd)
+                'Merging the columns we just added if needed
+                Range(Cells(1, rangeExport.Columns.Count - 2 * nbColumnsToAdd), Cells(1000, rangeExport.Columns.Count - nbColumnsToAdd)).Copy
+                Range(Cells(1, rangeExport.Columns.Count - nbColumnsToAdd + 1), Cells(1, rangeExport.Columns.Count - nbColumnsToAdd + 1)).PasteSpecial _
+                Paste:=xlPasteFormats
+                Application.CutCopyMode = False
+            End If
+        End If
+        Dim thisColumn As Integer
+        thisColumn = rangeInSubRow.Columns(1).Offset(, 1).Column - rangeInSubRow.Columns(1).Column + 1
+        While thisColumn <= rangeInSubRow.Columns.Count
+            rangeExport.Rows(currentLine).Columns(colRangeExport).Value = rangeInSubRow.Columns(thisColumn).Value
+            colRangeExport = colRangeExport + 1
+            thisColumn = rangeInSubRow.Rows(1).Columns(thisColumn).Offset(0, 1).Column - rangeInSubRow.Rows(1).Columns(1).Column + 1
+        Wend
+        rowRangeInSubRow = rangeIn.Rows(rowRangeInSubRow).Columns(1).Offset(1, 0).Row
+        Set rangeInSubRow = rangeIn.Rows(rowRangeInSubRow)
+    Wend
+
+    'Impacting the changes made on input ranges
+    rangeExport.Name = rangeExportStr
+End Sub
+
