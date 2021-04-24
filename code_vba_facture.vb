@@ -51,8 +51,8 @@ Sub addOneLineToClientIdentification()
         Application.CutCopyMode = False
     End If
     'Refreshing the named ranges ClientDetails, InvoiceDetails and impression_des_titres
-    Range("'template'!$H$" & startRow & ":$M$" & endRow + 1).Name = "ClientDetails"
-    Range("'template'!$" & startRow & ":$" & endRow + 1).Name = "impression_des_titres"
+    Range("'" & ActiveSheet.Name & "'" & "!$H$" & startRow & ":$M$" & endRow + 1).Name = "ClientDetails"
+    Range("'" & ActiveSheet.Name & "'" & "!$" & startRow & ":$" & endRow + 1).Name = "impression_des_titres"
 End Sub
 
 Sub addOneLineToInvoiceDetails()
@@ -74,8 +74,8 @@ Sub addOneLineToInvoiceDetails()
         Application.CutCopyMode = False
     End If
     'Refreshing the named ranges ClientDetails, InvoiceDetails and impression_des_titres
-    Range("'template'!$P$" & startRow & ":$S$" & endRow + 1).Name = "InvoiceDetails"
-    Range("'template'!$" & startRowClientDetails & ":$" & endRow + 1).Name = "impression_des_titres"
+    Range("'" & ActiveSheet.Name & "'" & "!$P$" & startRow & ":$S$" & endRow + 1).Name = "InvoiceDetails"
+    Range("'" & ActiveSheet.Name & "'" & "!$" & startRowClientDetails & ":$" & endRow + 1).Name = "impression_des_titres"
 End Sub
 
 Sub addOneLineOfDevisOrDMP()
@@ -92,8 +92,8 @@ Sub addOneLineOfDevisOrDMP()
     'Replicate the formulas of the previous line
     Call copyFormulasFromLine(endRowRecap, endRowRecap, "C", "J", endRowRecap + 1)
     'Updating the DevisEtDMP range
-    Range("'template'!$D$" & startRow & ":$D$" & endRow + 1).Name = "DevisEtDMPs"
-    Range("'template'!$D$" & startRowRecap & ":$D$" & endRowRecap + 1).Name = "DevisEtDMPRecap"
+    Range("'" & ActiveSheet.Name & "'" & "!$D$" & startRow & ":$D$" & endRow + 1).Name = "DevisEtDMPs"
+    Range("'" & ActiveSheet.Name & "'" & "!$D$" & startRowRecap & ":$D$" & endRowRecap + 1).Name = "DevisEtDMPRecap"
     Range("C" & endRow + 1).Value = Range("C" & endRow).Value
     Range("C" & endRow + 1).Select
 End Sub
@@ -106,9 +106,9 @@ Sub addOneArticle()
     Call addOneLine(endRow, lineInsert, "C", "S", 1)
     Range("C" & lineInsert).Value = "Si la référence du devis ou DMP est nouvelle, cliquer sur le bouton ""Chercher de nouveaux devis"" en colonne X."
     'Saving the references of the different columns so that the formulas can adapt themselves
-    Range("'template'!$C$" & startRow & ":$C$" & endRow + 1).Name = "RefsDevisEtDMP"
-    Range("'template'!$R$" & startRow & ":$R$" & endRow + 1).Name = "MontantsArticlesHT"
-    Range("'template'!$S$" & startRow & ":$S$" & endRow + 1).Name = "CodesTVA"
+    Range("'" & ActiveSheet.Name & "'" & "!$C$" & startRow & ":$C$" & endRow + 1).Name = "RefsDevisEtDMP"
+    Range("'" & ActiveSheet.Name & "'" & "!$R$" & startRow & ":$R$" & endRow + 1).Name = "MontantsArticlesHT"
+    Range("'" & ActiveSheet.Name & "'" & "!$S$" & startRow & ":$S$" & endRow + 1).Name = "CodesTVA"
 End Sub
 
 Sub addNewHeaderToArticlesTable()
@@ -155,9 +155,9 @@ Sub addOneAppelDeFond()
     Range("F" & endRow + 1 & ":" & "H" & endRow + 2).Select
     Selection.ClearContents
     'Refreshing the named range of that table
-    Range("'template'!$K$" & startRow & ":$K$" & endRow + 2).Name = "TauxTVAAppeles"
-    Range("'template'!$L$" & startRow & ":$M$" & endRow + 2).Name = "MontantsTVAAppeles"
-    Range("'template'!$N$" & startRow & ":$O$" & endRow + 2).Name = "MontantsTTCAppeles"
+    Range("'" & ActiveSheet.Name & "'" & "!$K$" & startRow & ":$K$" & endRow + 2).Name = "TauxTVAAppeles"
+    Range("'" & ActiveSheet.Name & "'" & "!$L$" & startRow & ":$M$" & endRow + 2).Name = "MontantsTVAAppeles"
+    Range("'" & ActiveSheet.Name & "'" & "!$N$" & startRow & ":$O$" & endRow + 2).Name = "MontantsTTCAppeles"
     'We check if the table containig the taxe d'ameublement is well calculated. If not we refresh it.
     Call refreshTaxeDAmeublementTable
     Call refreshTaxeDAmeublementOfCurrentInvoice
@@ -173,9 +173,9 @@ Sub addOneInvoiceToRecapitulatif()
     Range("C" & endRow + 1).Value = "Facture d'acompte :"
     Range("H" & endRow + 1).Formula = "=" & Range("TotalTTCFacture").Address ' "=$L$" & invoiceTotalTTC
     'Refreshing the named ranges based on the table Factures d'acompte
-    Range("'template'!$H$" & startRow & ":$I$" & endRow + 2).Name = "MontantsFacturesAppeles"
-    Range("'template'!$J$" & startRow & ":$K$" & endRow + 2).Name = "MontantsPayesSurFacturesAppeles"
-    Range("'template'!$R$" & startRow & ":$S$" & endRow + 2).Name = "RestantsDusSurFacturesAppeles"
+    Range("'" & ActiveSheet.Name & "'" & "!$H$" & startRow & ":$I$" & endRow + 2).Name = "MontantsFacturesAppeles"
+    Range("'" & ActiveSheet.Name & "'" & "!$J$" & startRow & ":$K$" & endRow + 2).Name = "MontantsPayesSurFacturesAppeles"
+    Range("'" & ActiveSheet.Name & "'" & "!$R$" & startRow & ":$S$" & endRow + 2).Name = "RestantsDusSurFacturesAppeles"
 End Sub
 
 Sub refreshTaxeDAmeublementTable()
@@ -185,9 +185,9 @@ Sub refreshTaxeDAmeublementTable()
         startRow = Range("UniqueRefDevisEtDMPs").Row
         endRowBeforeUpdate = Range("UniqueRefDevisEtDMPs").Row + Range("UniqueRefDevisEtDMPs").Rows.Count - 1
         endRow = Range("UniqueRefDevisEtDMPs").Row + Range("DevisEtDMPs").Rows.Count - 1
-        Range("'template'!$Z$" & startRow & ":$Z$" & endRow).Name = "UniqueRefDevisEtDMPs"
-        Range("'template'!$AA$" & startRow & ":$AA$" & endRow).Name = "TaxeAmeublementN"
-        Range("'template'!$AB$" & startRow & ":$AB$" & endRow).Name = "TaxeAmeublementR"
+        Range("'" & ActiveSheet.Name & "'" & "!$Z$" & startRow & ":$Z$" & endRow).Name = "UniqueRefDevisEtDMPs"
+        Range("'" & ActiveSheet.Name & "'" & "!$AA$" & startRow & ":$AA$" & endRow).Name = "TaxeAmeublementN"
+        Range("'" & ActiveSheet.Name & "'" & "!$AB$" & startRow & ":$AB$" & endRow).Name = "TaxeAmeublementR"
         'Copying the formulas to the lines we have to add
         thisRow = endRowBeforeUpdate
         While thisRow < endRow
@@ -244,14 +244,14 @@ Sub refreshNamedRanges()
     startRow = Application.Match("Selon devis", Range("C:C"), 0)
     endRow = Range("C" & startRow).End(xlDown).Row
     Dim rngUpdated As Range
-    Set rngUpdated = Range("'template'!$D$" & startRow & ":$D$" & endRow)
+    Set rngUpdated = Range("'" & ActiveSheet.Name & "'" & "!$D$" & startRow & ":$D$" & endRow)
     Call updateReferenceOnUserCommand("DevisEtDMPs", rngUpdated, "Devis et DMP")
    
     'Devis et DMP on RECAPITULATIF
     recapPosition = Range("recapPosition").Row
     startRowRecap = recapPosition + Application.Match("Selon devis", Range("C" & recapPosition & ":C" & recapPosition + 100), 0) - 1 ' Why do we need here - 1 ?
     endRowRecap = Range("C" & startRowRecap).End(xlDown).Row
-    Set rngUpdated = Range("'template'!$D$" & startRowRecap & ":$D$" & endRowRecap)
+    Set rngUpdated = Range("'" & ActiveSheet.Name & "'" & "!$D$" & startRowRecap & ":$D$" & endRowRecap)
     Call updateReferenceOnUserCommand("DevisEtDMPRecap", rngUpdated, "Devis et DMP du Recapitulatif")
     'We check if the number of devis and DMP is the same compared to the ones on first page. If not we raise an alert and ask to delete the extra lines
     nbLinesDevisAndDMPs = endRow - startRow + 1
@@ -271,9 +271,9 @@ Sub refreshNamedRanges()
     'table ( + 3 ) and then jump to the end
     endRow = Range("C1:C100").Find(what:="Ref devis et DMP", searchorder:=xlByRows, searchdirection:=xlPrevious).Row + 3
     endRow = Range("C" & endRow).End(xlDown).Row
-    Set rngUpdated = Range("'template'!$C$" & startRow & ":$C$" & endRow)
+    Set rngUpdated = Range("'" & ActiveSheet.Name & "'" & "!$C$" & startRow & ":$C$" & endRow)
     Call updateReferenceOnUserCommand("RefsDevisEtDMP", rngUpdated, "Ref devis et DMP")
-    Set rngUpdated = Range("'template'!$R$" & startRow & ":$R$" & endRow)
+    Set rngUpdated = Range("'" & ActiveSheet.Name & "'" & "!$R$" & startRow & ":$R$" & endRow)
     Call updateReferenceOnUserCommand("MontantsArticlesHT", rngUpdated, "Montant HT des différents articles")
 
 
@@ -283,44 +283,44 @@ Sub refreshNamedRanges()
     'Let us move until the column "Base" before looking at the end. Indeed, the Range.End excel
     'function is mislead by the merged cell. Therefore we pick the first "safe" place in which we can run it
     endRow = Range("I" & startRow).End(xlDown).Row
-    Set rngUpdated = Range("'template'!$K$" & startRow & ":$K$" & endRow)
+    Set rngUpdated = Range("'" & ActiveSheet.Name & "'" & "!$K$" & startRow & ":$K$" & endRow)
     Call updateReferenceOnUserCommand("TauxTVAAppeles", rngUpdated, "Taux TVA de l'appel de fond")
     endRow = Range("I" & startRow).End(xlDown).Row
-    Set rngUpdated = Range("'template'!$L$" & startRow & ":$M$" & endRow)
+    Set rngUpdated = Range("'" & ActiveSheet.Name & "'" & "!$L$" & startRow & ":$M$" & endRow)
     Call updateReferenceOnUserCommand("MontantsTVAAppeles", rngUpdated, "Montants TVA de l'appel de fond")
     endRow = Range("I" & startRow).End(xlDown).Row
-    Set rngUpdated = Range("'template'!$N$" & startRow & ":$O$" & endRow)
+    Set rngUpdated = Range("'" & ActiveSheet.Name & "'" & "!$N$" & startRow & ":$O$" & endRow)
     Call updateReferenceOnUserCommand("MontantsTTCAppeles", rngUpdated, "Montants TTC de l'appel de fond")
 
     'Factures d'acompte
     startRow = Range("C1:D1000").Find(what:="Facture d'acompte :", searchorder:=xlByRows).Row
     endRow = Range("C1:D1000").Find(what:="Facture d'acompte :", searchorder:=xlByRows, searchdirection:=xlPrevious).Row + 1
-    Set rngUpdated = Range("'template'!$H$" & startRow & ":$I$" & endRow)
+    Set rngUpdated = Range("'" & ActiveSheet.Name & "'" & "!$H$" & startRow & ":$I$" & endRow)
     Call updateReferenceOnUserCommand("MontantsFacturesAppeles", rngUpdated, "Montants Factures appelees")
-    Set rngUpdated = Range("'template'!$J$" & startRow & ":$K$" & endRow)
+    Set rngUpdated = Range("'" & ActiveSheet.Name & "'" & "!$J$" & startRow & ":$K$" & endRow)
     Call updateReferenceOnUserCommand("MontantsPayesSurFacturesAppeles", rngUpdated, "Montants payes sur Factures appelees")
-    Set rngUpdated = Range("'template'!$R$" & startRow & ":$S$" & endRow)
+    Set rngUpdated = Range("'" & ActiveSheet.Name & "'" & "!$R$" & startRow & ":$S$" & endRow)
     Call updateReferenceOnUserCommand("RestantsDusSurFacturesAppeles", rngUpdated, "Montants restants sur Factures appelees")
 
     'Table d'aggregation de la taxe d'ameublement
     'Getting the position of the table "Aggrégation de la taxe d'ameublement"
     startRow = Application.Match("Aggrégation de la taxe d'ameublement", Range("Z:Z"), 0) + 3
     endRow = Range("Z" & startRow).End(xlDown).Row
-    Set rngUpdated = Range("'template'!$Z$" & startRow & ":$Z$" & endRow)
+    Set rngUpdated = Range("'" & ActiveSheet.Name & "'" & "!$Z$" & startRow & ":$Z$" & endRow)
     Call updateReferenceOnUserCommand("UniqueRefDevisEtDMPs", rngUpdated, "Références des devis et DMP dans la table d'aggrégation de la taxe d'ameublement")
-    Set rngUpdated = Range("'template'!$AA$" & startRow & ":$AA$" & endRow)
+    Set rngUpdated = Range("'" & ActiveSheet.Name & "'" & "!$AA$" & startRow & ":$AA$" & endRow)
     Call updateReferenceOnUserCommand("TaxeAmeublementN", rngUpdated, "Taxe d'ameublement N dans la table d'aggrégation de la taxe d'ameublement")
-    Set rngUpdated = Range("'template'!$AB$" & startRow & ":$AB$" & endRow)
+    Set rngUpdated = Range("'" & ActiveSheet.Name & "'" & "!$AB$" & startRow & ":$AB$" & endRow)
     Call updateReferenceOnUserCommand("TaxeAmeublementR", rngUpdated, "Taxe d'ameublement R dans la table d'aggrégation de la taxe d'ameublement")
     'Aggregation des montants TTC des devis
-    Set rngUpdated = Range("'template'!$AC$" & startRow & ":$AC$" & endRow)
+    Set rngUpdated = Range("'" & ActiveSheet.Name & "'" & "!$AC$" & startRow & ":$AC$" & endRow)
     Call updateReferenceOnUserCommand("AggregationMontantsDevisTTC", rngUpdated, "Montants TTC des devis dans la table d'aggrégation de la taxe d'ameublement")
 
     'Impression des titres
     startRow = Range("ClientDetails").Row
-    endRow = Range("ClientDetails").Row + Range("ClientDetails").Rows.Count - 1
-    endRowInvoiceDetails = Range("InvoiceDetails").Row + Range("InvoiceDetails").Rows.Count - 1
+    endRow = Range("ClientDetails").Row + Range("ClientDetails").Rows.Count 
+    endRowInvoiceDetails = Range("InvoiceDetails").Row + Range("InvoiceDetails").Rows.Count
     endRow = WorksheetFunction.Max(endRow, endRowInvoiceDetails)
-    Set rngUpdated = Range("'template'!$" & startRow & ":$" & endRow)
+    Set rngUpdated = Range("'" & ActiveSheet.Name & "'" & "!$" & startRow & ":$" & endRow)
     Call updateReferenceOnUserCommand("impression_des_titres", rngUpdated, "Impression des titres")
 End Sub
