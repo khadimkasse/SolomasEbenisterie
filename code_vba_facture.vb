@@ -40,9 +40,9 @@ Sub addOneLineToClientIdentification()
     endRow = Range("ClientDetails").Row + Range("ClientDetails").Rows.Count - 1
     endRowInvoiceDetails = Range("InvoiceDetails").Row + Range("InvoiceDetails").Rows.Count - 1
     'If the invoice details part is longer than the client identification one, we don't need to add any new lines
-    If endRowInvoiceDetails <= endRow Then 
+    If endRowInvoiceDetails <= endRow Then
         lineInsert = endRow + 1
-        Call addOneLine(endRow, lineInsert, "H", "M")
+        Call addOneLine(endRow, lineInsert, "H", "M", 1)
     Else
         Range("H" & endRow & ":M" & endRow).Copy
         Range("H" & endRow + 1).PasteSpecial _
@@ -63,11 +63,11 @@ Sub addOneLineToInvoiceDetails()
     endRowClientDetails = Range("ClientDetails").Row + Range("ClientDetails").Rows.Count - 1
     lineInsert = endRow + 1
     'If the client identification details part is longer than the invoice one, we don't need to add any new lines
-    If endRowClientDetails <= endRow Then 
+    If endRowClientDetails <= endRow Then
         lineInsert = endRow + 1
-        Call addOneLine(endRow, lineInsert, "P", "S")
+        Call addOneLine(endRow, lineInsert, "P", "S", 1)
     Else
-        Range("P" & endRow & ":S" & endRow).Copy
+        Range("P" & endRow - 1 & ":S" & endRow - 1).Copy
         Range("P" & endRow + 1).PasteSpecial _
         Paste:=xlPasteFormats
         'Emptying the clipboard
@@ -160,7 +160,7 @@ Sub addOneAppelDeFond()
     Range("'template'!$N$" & startRow & ":$O$" & endRow + 2).Name = "MontantsTTCAppeles"
     'We check if the table containig the taxe d'ameublement is well calculated. If not we refresh it.
     Call refreshTaxeDAmeublementTable
-    Call refreshTaxeDAmeublemnentOfCurrentInvoice()
+    Call refreshTaxeDAmeublementOfCurrentInvoice
 End Sub
 
 Sub addOneInvoiceToRecapitulatif()
@@ -191,13 +191,13 @@ Sub refreshTaxeDAmeublementTable()
         'Copying the formulas to the lines we have to add
         thisRow = endRowBeforeUpdate
         While thisRow < endRow
-            Call copyFormulasFromLine(startRow, startRow, "AA", "AB", thisRow + 1)
+            Call copyFormulasFromLine(startRow, startRow, "AA", "AC", thisRow + 1)
             thisRow = thisRow + 1
         Wend
     End If
 End Sub
 
-Sub refreshTaxeDAmeublemnentOfCurrentInvoice()
+Sub refreshTaxeDAmeublementOfCurrentInvoice()
     startRow = Range("MontantsTVAAppeles").Row
     endRow = Range("MontantsTVAAppeles").Row + Range("MontantsTVAAppeles").Rows.Count - 1
     i = startRow
@@ -217,6 +217,19 @@ Sub refreshTaxeDAmeublemnentOfCurrentInvoice()
     Range("TotalTaxeDAmeublementFacture").Formula = formulaTaxeDAmeublement
 End Sub
 
+Sub checkMontantDevis()
+    Dim devis As Range, montantDevis As Double, sommeArticlesDevis As Double
+    Dim indexDevis As Integer: indexDevis = 1
+    For Each devis In Range("DevisEtDMPs")
+        sommeArticlesDevis = Range("AggregationMontantsDevisTTC").Rows(indexDevis).Value
+        montantDevis = devis.Columns(1).Offset(, 4).Value
+        'We compare the two values without the decimals as the rounding isn't always the same
+        If CLng(sommeArticlesDevis) <> CLng(montantDevis) Then
+            MsgBox "Attention ! Le montant TTC du devis " & devis.Value & " déclaré en " & devis.Offset(, 4).Address & " semble erroné . Vérifiez que tous les articles relatifs à ce devis ont été listés."
+        End If
+        indexDevis = indexDevis + 1
+    Next devis
+End Sub
 Sub updateReferenceOnUserCommand(rangeName As String, rngUpdated As Range, referenceName As String)
      If Not (Range(rangeName).Address = rngUpdated.Address) Then
         If MsgBox("La référence de " & referenceName & " semble éronnée. La bonne référence semble être " & _
@@ -299,6 +312,9 @@ Sub refreshNamedRanges()
     Call updateReferenceOnUserCommand("TaxeAmeublementN", rngUpdated, "Taxe d'ameublement N dans la table d'aggrégation de la taxe d'ameublement")
     Set rngUpdated = Range("'template'!$AB$" & startRow & ":$AB$" & endRow)
     Call updateReferenceOnUserCommand("TaxeAmeublementR", rngUpdated, "Taxe d'ameublement R dans la table d'aggrégation de la taxe d'ameublement")
+    'Aggregation des montants TTC des devis
+    Set rngUpdated = Range("'template'!$AC$" & startRow & ":$AC$" & endRow)
+    Call updateReferenceOnUserCommand("AggregationMontantsDevisTTC", rngUpdated, "Montants TTC des devis dans la table d'aggrégation de la taxe d'ameublement")
 
     'Impression des titres
     startRow = Range("ClientDetails").Row
@@ -308,4 +324,3 @@ Sub refreshNamedRanges()
     Set rngUpdated = Range("'template'!$" & startRow & ":$" & endRow)
     Call updateReferenceOnUserCommand("impression_des_titres", rngUpdated, "Impression des titres")
 End Sub
-
