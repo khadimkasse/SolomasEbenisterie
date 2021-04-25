@@ -217,6 +217,26 @@ Sub refreshTaxeDAmeublementOfCurrentInvoice()
     Range("TotalTaxeDAmeublementFacture").Formula = formulaTaxeDAmeublement
 End Sub
 
+Private Function CustomMin(a As Range, b As Range) As Integer
+    If b Is Nothing Then
+        CustomMin = a.Row
+    ElseIf a Is Nothing Then
+        CustomMin = b.Row
+    Else
+        CustomMin = Application.Min(a.Row, b.Row)
+    End If
+End Function
+
+Private Function CustomMax(a As Range, b As Range) As Integer
+    If b Is Nothing Then
+        CustomMax = a.Row
+    ElseIf a Is Nothing Then
+        CustomMax = b.Row
+    Else
+        CustomMax = WorksheetFunction.Max(a.Row, b.Row)
+    End If
+End Function
+
 Sub checkMontantDevis()
     Dim devis As Range, montantDevis As Double, sommeArticlesDevis As Double
     Dim indexDevis As Integer: indexDevis = 1
@@ -241,16 +261,22 @@ Sub updateReferenceOnUserCommand(rangeName As String, rngUpdated As Range, refer
 End Sub
 Sub refreshNamedRanges()
     'Devis et DMP
-    startRow = Application.Match("Selon devis", Range("C:C"), 0)
-    endRow = Range("C" & startRow).End(xlDown).Row
+    recapPosition = Range("recapPosition").Row
+    startRow = CustomMin(Range("C1:C" & recapPosition).Find(what:="Selon devis", searchorder:=xlByRows, lookat:=xlwhole), _ 
+    Range("C1:C" & recapPosition).Find(what:="Selon", searchorder:=xlByRows, lookat:=xlwhole))
+    'As we don't want to take the Selon devis of the RECAPITULATIF page, we search our endRow above it
+    endRow = CustomMax(Range("C1:C" & recapPosition).Find(what:="Selon devis", searchorder:=xlByRows, searchdirection:=xlPrevious, lookat:=xlwhole), _
+    Range("C1:C" & recapPosition).Find(what:="Selon", searchorder:=xlByRows, searchdirection:=xlPrevious, lookat:=xlwhole))
     Dim rngUpdated As Range
     Set rngUpdated = Range("'" & ActiveSheet.Name & "'" & "!$D$" & startRow & ":$D$" & endRow)
     Call updateReferenceOnUserCommand("DevisEtDMPs", rngUpdated, "Devis et DMP")
    
     'Devis et DMP on RECAPITULATIF
-    recapPosition = Range("recapPosition").Row
-    startRowRecap = recapPosition + Application.Match("Selon devis", Range("C" & recapPosition & ":C" & recapPosition + 100), 0) - 1 ' Why do we need here - 1 ?
-    endRowRecap = Range("C" & startRowRecap).End(xlDown).Row
+    
+    startRowRecap = CustomMin(Range("C" & recapPosition & ":C" & recapPosition + 1000).Find(what:="Selon devis", searchorder:=xlByRows, LookIn:=xlValues, lookat:=xlwhole), _ 
+    Range("C" & recapPosition & ":C" & recapPosition + 1000).Find(what:="Selon", searchorder:=xlByRows, LookIn:=xlValues, lookat:=xlwhole)) 
+    endRowRecap = CustomMax(Range("C" & recapPosition & ":C" & recapPosition + 1000).Find(what:="Selon devis", searchorder:=xlByRows, searchdirection:=xlPrevious, lookat:=xlwhole), _
+    Range("C" & recapPosition & ":C" & recapPosition + 1000).Find(what:="Selon", searchorder:=xlByRows, searchdirection:=xlPrevious, lookat:=xlwhole)) 
     Set rngUpdated = Range("'" & ActiveSheet.Name & "'" & "!$D$" & startRowRecap & ":$D$" & endRowRecap)
     Call updateReferenceOnUserCommand("DevisEtDMPRecap", rngUpdated, "Devis et DMP du Recapitulatif")
     'We check if the number of devis and DMP is the same compared to the ones on first page. If not we raise an alert and ask to delete the extra lines
@@ -305,7 +331,8 @@ Sub refreshNamedRanges()
     'Table d'aggregation de la taxe d'ameublement
     'Getting the position of the table "Aggrégation de la taxe d'ameublement"
     startRow = Application.Match("Aggrégation de la taxe d'ameublement", Range("Z:Z"), 0) + 3
-    endRow = Range("Z" & startRow).End(xlDown).Row
+    'We know that the table contains max 16 lines. Therefore we do our xlUp using that
+    endRow = Range("Z" & startRow + 17).End(xlUp).Row
     Set rngUpdated = Range("'" & ActiveSheet.Name & "'" & "!$Z$" & startRow & ":$Z$" & endRow)
     Call updateReferenceOnUserCommand("UniqueRefDevisEtDMPs", rngUpdated, "Références des devis et DMP dans la table d'aggrégation de la taxe d'ameublement")
     Set rngUpdated = Range("'" & ActiveSheet.Name & "'" & "!$AA$" & startRow & ":$AA$" & endRow)
@@ -318,9 +345,10 @@ Sub refreshNamedRanges()
 
     'Impression des titres
     startRow = Range("ClientDetails").Row
-    endRow = Range("ClientDetails").Row + Range("ClientDetails").Rows.Count 
+    endRow = Range("ClientDetails").Row + Range("ClientDetails").Rows.Count
     endRowInvoiceDetails = Range("InvoiceDetails").Row + Range("InvoiceDetails").Rows.Count
     endRow = WorksheetFunction.Max(endRow, endRowInvoiceDetails)
     Set rngUpdated = Range("'" & ActiveSheet.Name & "'" & "!$" & startRow & ":$" & endRow)
     Call updateReferenceOnUserCommand("impression_des_titres", rngUpdated, "Impression des titres")
 End Sub
+
