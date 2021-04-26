@@ -188,6 +188,7 @@ Sub refreshTaxeDAmeublementTable()
         Range("'" & ActiveSheet.Name & "'" & "!$Z$" & startRow & ":$Z$" & endRow).Name = "UniqueRefDevisEtDMPs"
         Range("'" & ActiveSheet.Name & "'" & "!$AA$" & startRow & ":$AA$" & endRow).Name = "TaxeAmeublementN"
         Range("'" & ActiveSheet.Name & "'" & "!$AB$" & startRow & ":$AB$" & endRow).Name = "TaxeAmeublementR"
+        Range("'" & ActiveSheet.Name & "'" & "!$AC$" & startRow & ":$AC$" & endRow).Name = "AggregationMontantsDevisTTC"
         'Copying the formulas to the lines we have to add
         thisRow = endRowBeforeUpdate
         While thisRow < endRow
@@ -262,21 +263,21 @@ End Sub
 Sub refreshNamedRanges()
     'Devis et DMP
     recapPosition = Range("recapPosition").Row
-    startRow = CustomMin(Range("C1:C" & recapPosition).Find(what:="Selon devis", searchorder:=xlByRows, lookat:=xlwhole), _ 
-    Range("C1:C" & recapPosition).Find(what:="Selon", searchorder:=xlByRows, lookat:=xlwhole))
+    startRow = CustomMin(Range("C1:C" & recapPosition).Find(what:="Selon devis", searchorder:=xlByRows, lookat:=xlWhole), _
+    Range("C1:C" & recapPosition).Find(what:="Selon", searchorder:=xlByRows, lookat:=xlWhole))
     'As we don't want to take the Selon devis of the RECAPITULATIF page, we search our endRow above it
-    endRow = CustomMax(Range("C1:C" & recapPosition).Find(what:="Selon devis", searchorder:=xlByRows, searchdirection:=xlPrevious, lookat:=xlwhole), _
-    Range("C1:C" & recapPosition).Find(what:="Selon", searchorder:=xlByRows, searchdirection:=xlPrevious, lookat:=xlwhole))
+    endRow = CustomMax(Range("C1:C" & recapPosition).Find(what:="Selon devis", searchorder:=xlByRows, searchdirection:=xlPrevious, lookat:=xlWhole), _
+    Range("C1:C" & recapPosition).Find(what:="Selon", searchorder:=xlByRows, searchdirection:=xlPrevious, lookat:=xlWhole))
     Dim rngUpdated As Range
     Set rngUpdated = Range("'" & ActiveSheet.Name & "'" & "!$D$" & startRow & ":$D$" & endRow)
     Call updateReferenceOnUserCommand("DevisEtDMPs", rngUpdated, "Devis et DMP")
    
     'Devis et DMP on RECAPITULATIF
     
-    startRowRecap = CustomMin(Range("C" & recapPosition & ":C" & recapPosition + 1000).Find(what:="Selon devis", searchorder:=xlByRows, LookIn:=xlValues, lookat:=xlwhole), _ 
-    Range("C" & recapPosition & ":C" & recapPosition + 1000).Find(what:="Selon", searchorder:=xlByRows, LookIn:=xlValues, lookat:=xlwhole)) 
-    endRowRecap = CustomMax(Range("C" & recapPosition & ":C" & recapPosition + 1000).Find(what:="Selon devis", searchorder:=xlByRows, searchdirection:=xlPrevious, lookat:=xlwhole), _
-    Range("C" & recapPosition & ":C" & recapPosition + 1000).Find(what:="Selon", searchorder:=xlByRows, searchdirection:=xlPrevious, lookat:=xlwhole)) 
+    startRowRecap = CustomMin(Range("C" & recapPosition & ":C" & recapPosition + 1000).Find(what:="Selon devis", searchorder:=xlByRows, LookIn:=xlValues, lookat:=xlWhole), _
+    Range("C" & recapPosition & ":C" & recapPosition + 1000).Find(what:="Selon", searchorder:=xlByRows, LookIn:=xlValues, lookat:=xlWhole))
+    endRowRecap = CustomMax(Range("C" & recapPosition & ":C" & recapPosition + 1000).Find(what:="Selon devis", searchorder:=xlByRows, searchdirection:=xlPrevious, lookat:=xlWhole), _
+    Range("C" & recapPosition & ":C" & recapPosition + 1000).Find(what:="Selon", searchorder:=xlByRows, searchdirection:=xlPrevious, lookat:=xlWhole))
     Set rngUpdated = Range("'" & ActiveSheet.Name & "'" & "!$D$" & startRowRecap & ":$D$" & endRowRecap)
     Call updateReferenceOnUserCommand("DevisEtDMPRecap", rngUpdated, "Devis et DMP du Recapitulatif")
     'We check if the number of devis and DMP is the same compared to the ones on first page. If not we raise an alert and ask to delete the extra lines
@@ -342,6 +343,9 @@ Sub refreshNamedRanges()
     'Aggregation des montants TTC des devis
     Set rngUpdated = Range("'" & ActiveSheet.Name & "'" & "!$AC$" & startRow & ":$AC$" & endRow)
     Call updateReferenceOnUserCommand("AggregationMontantsDevisTTC", rngUpdated, "Montants TTC des devis dans la table d'aggrégation de la taxe d'ameublement")
+    'Checking the montant devis TTC announced are right
+    Call checkMontantDevis
+
 
     'Impression des titres
     startRow = Range("ClientDetails").Row
@@ -351,4 +355,6 @@ Sub refreshNamedRanges()
     Set rngUpdated = Range("'" & ActiveSheet.Name & "'" & "!$" & startRow & ":$" & endRow)
     Call updateReferenceOnUserCommand("impression_des_titres", rngUpdated, "Impression des titres")
 End Sub
+
+
 
