@@ -155,6 +155,7 @@ Sub addOneAppelDeFond()
     Range("F" & endRow + 1 & ":" & "H" & endRow + 2).Select
     Selection.ClearContents
     'Refreshing the named range of that table
+    Range("'" & ActiveSheet.Name & "'" & "!$I$" & startRow & ":$J$" & endRow + 2).Name = "BasesAppelées"
     Range("'" & ActiveSheet.Name & "'" & "!$K$" & startRow & ":$K$" & endRow + 2).Name = "TauxTVAAppeles"
     Range("'" & ActiveSheet.Name & "'" & "!$L$" & startRow & ":$M$" & endRow + 2).Name = "MontantsTVAAppeles"
     Range("'" & ActiveSheet.Name & "'" & "!$N$" & startRow & ":$O$" & endRow + 2).Name = "MontantsTTCAppeles"
