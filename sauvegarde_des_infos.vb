@@ -3,8 +3,14 @@ Option Explicit
 Sub saveInvoiceInformation()
     Application.ScreenUpdating = False
     Dim currentLine As Integer, invoiceNumber As String
-    Dim ClientDetailsExport As Range
+
+    Dim ClientDetailsExport As Range, DevisExport As Range, DMPsExport As Range, TotalTTCFactureExport As Range, TypologieClientExport As Range
+    Set TotalTTCFactureExport = Sheets("informations enregistrées").Range("TotalTTCFactureExport")
     Set ClientDetailsExport = Sheets("informations enregistrées").Range("ClientDetailsExport")
+    Set DevisExport = Sheets("informations enregistrées").Range("DevisExport")
+    Set DMPsExport = Sheets("informations enregistrées").Range("DMPsExport")
+    Set TypologieClientExport = Sheets("informations enregistrées").Range("TypologieClientExport")
+
     currentLine = Sheets("informations enregistrées").Range("ClientDetailsExport").Rows.Count + 1
     invoiceNumber = Range("invoiceNumber").Value
     'If the current invoice has already been saved, currentLine has to refer to it
@@ -16,12 +22,19 @@ Sub saveInvoiceInformation()
         Sheets("informations enregistrées").Range(currentLine & ":" & currentLine).ClearContents
     Else
         'We add one line to the export
+        Set TotalTTCFactureExport = TotalTTCFactureExport.Resize(currentLine)
         Set ClientDetailsExport = ClientDetailsExport.Resize(currentLine)
+        Set DevisExport = DevisExport.Resize(currentLine)
+        Set DMPsExport = DMPsExport.Resize(currentLine)
+        Set TypologieClientExport = TypologieClientExport.Resize(currentLine)
     End If
 
     '***************************************** Saving the invoice reference *****************************************
     Sheets("informations enregistrées").Range("A" & currentLine).Formula = "=$A" & currentLine - 1 & "+1"
     Sheets("informations enregistrées").Range("B" & currentLine).Value = invoiceNumber
+
+    '***************************************** Saving the client type *****************************************
+    Sheets("informations enregistrées").Range("TypologieClientExport").Rows(currentLine).Columns(1).Value = ActiveSheet.Range("TypologieClient").Value
 
     '***************************************** Saving client informations *****************************************
     'Looping through all the details of a client identification. To bypass the merged cells, we go from one line to another by using the Offset() function
@@ -39,12 +52,10 @@ Sub saveInvoiceInformation()
     Call exportReferencesFromRange(rangeInInvoiceDetails, "InvoiceDetailsExport", currentLine, 1)
 
     '***************************************** Saving the devis and DMPs **************************************
-    Dim DevisExport, DMPsExport As Range
     Dim devisOrDMP As Range, devisOrDMPRow As Integer
     Dim colDevisExport As Integer, colDMPExport As Integer
     devisOrDMPRow = 1
-    Set DevisExport = Sheets("informations enregistrées").Range("DevisExport")
-    Set DMPsExport = Sheets("informations enregistrées").Range("DMPsExport")
+    
     Set devisOrDMP = Range("DevisEtDMPs").Rows(devisOrDMPRow)
     colDevisExport = 1
     colDMPExport = 1
@@ -114,19 +125,34 @@ Sub saveInvoiceInformation()
         devisOrDMPRow = devisOrDMPRow + 1
         Set devisOrDMP = Range("DevisEtDMPs").Rows(devisOrDMPRow)
     Wend
-    DevisExport.Name = "DevisExport"
-    DMPsExport.Name = "DMPsExport"
 
     'Once the invoice has been saved, we cannot update the reference of it
     'Therefore, we change the value of the range invoiceNumber to keep the values as fixed and not depending on a formula
-    Range("invoiceNumber").Copy
-    Range("invoiceNumber").PasteSpecial _
-    Paste:=xlPasteValues
-    Application.CutCopyMode = False
-    Application.ScreenUpdating = True
+    If ActiveSheet.Name <> "template" Then
+        Range("invoiceNumber").Copy
+        Range("invoiceNumber").PasteSpecial _
+        Paste:=xlPasteValues
+        Application.CutCopyMode = False
+        Application.ScreenUpdating = True
+    End If
 
     '***************************************** Showing the display before printing (aperçu avant impression) **************************************
     'ActiveSheet.PrintPreview
+
+    '***************************************** Saving the Total dû sur facture *****************************************
+    TotalTTCFactureExport.Rows(currentLine).Columns(1).Value = ActiveSheet.Range("TotalTTCFacture").Value
+
+    Dim rangeInAppelDeFond As Range, columnsReferences As Variant
+    Set rangeInAppelDeFond = Range("AppelDeFond")
+    columnsReferences = Array(1, 2, 9)
+    Call addFromAreaWithGivenColumns(rangeInAppelDeFond, "AppelDeFondExport", columnsReferences, currentLine, libelle:="ADF", nbMergedRows:=2)
+    '***************************************** 'Impacting the changes made on input ranges *****************************************
+    ClientDetailsExport.Name = "ClientDetailsExport"
+    DevisExport.Name = "DevisExport"
+    DMPsExport.Name = "DMPsExport"
+    TypologieClientExport.Name = "TypologieClientExport"
+    TotalTTCFactureExport.Name = "TotalTTCFactureExport"
+
 End Sub
 
 Function CustomUnion(rangeA As Range, rangeB As Range) As Range
@@ -192,4 +218,60 @@ Sub exportReferencesFromRange(rangeIn As Range, rangeExportStr As String, curren
     'Impacting the changes made on input ranges
     rangeExport.Name = rangeExportStr
 End Sub
+
+Sub addFromAreaWithGivenColumns(rangeIn As Range, rangeExportStr As String, columnsReferences As Variant, currentLine As Integer, Optional libelle As String = "", Optional nbMergedRows As Integer = 1)
+    Dim rangeExport As Range
+    Set rangeExport = Sheets("informations enregistrées").Range(rangeExportStr)
+    Dim rangeInSubRow As Range, rowRangeInSubRow As Integer, colRangeExport As Integer, nbColumnsOfValues As Integer, startColumn As Integer
+    Dim libelleColumnImport As String
+    
+    rowRangeInSubRow = 1
+    Set rangeInSubRow = rangeIn.Rows(rowRangeInSubRow)
+    colRangeExport = 1
+    nbColumnsOfValues = UBound(columnsReferences) - LBound(columnsReferences) + 1
+    startColumn = IIf(libelle <> "", LBound(columnsReferences), LBound(columnsReferences) + 1)
+
+    While rangeInSubRow.Row <= rangeIn.Row + rangeIn.Rows.Count - 1
+        Dim lastColumnRangeExport As Integer
+        lastColumnRangeExport = rangeExport.Column + rangeExport.Columns.Count - 1
+        'If the key of the values we are about to add doesn't exist in the export,
+        'we insert as much columns as needed
+        If libelle <> "" Then
+            libelleColumnImport = libelle & " " & (1 + (rowRangeInSubRow - 1) / nbMergedRows)
+        Else
+            libelleColumnImport = rangeInSubRow.Rows(1).Columns(columnsReferences(0)).Value
+        End If
+        If libelleColumnImport <> rangeExport.Rows(1).Columns(colRangeExport).Value Then
+            Dim matchingColInExport As Range
+            Set matchingColInExport = rangeExport.Rows(1).Find( _
+                            what:=rangeInSubRow.Rows(1).Columns(columnsReferences(0)).Value, searchorder:=xlByColumns)
+            If Not matchingColInExport Is Nothing Then
+                colRangeExport = matchingColInExport.Column - rangeExport.Column + 1
+            Else
+                Worksheets("informations enregistrées").Columns(lastColumnRangeExport + 1).Resize(, nbColumnsOfValues).Insert Shift:=xlToRight
+                lastColumnRangeExport = lastColumnRangeExport + nbColumnsOfValues
+                'Merging the columns we just added if needed
+                Range(rangeExport.Columns(rangeExport.Columns.Count - nbColumnsOfValues + 1), rangeExport.Columns(rangeExport.Columns.Count)).Copy
+                rangeExport.Rows(1).Columns(rangeExport.Columns.Count + 1).PasteSpecial _
+                Paste:=xlPasteFormats
+                Application.CutCopyMode = False
+                colRangeExport = rangeExport.Columns.Count + 1
+                Set rangeExport = rangeExport.Resize(, rangeExport.Columns.Count + nbColumnsOfValues)
+                'Setting the title of the columns just added
+                rangeExport.Rows(1).Columns(colRangeExport).Value = libelleColumnImport
+            End If
+        End If
+        Dim thisColumn As Integer
+        For thisColumn = startColumn To UBound(columnsReferences)
+            rangeExport.Rows(currentLine).Columns(colRangeExport).Value = rangeInSubRow.Columns(columnsReferences(thisColumn)).Value
+            colRangeExport = colRangeExport + 1
+        Next thisColumn
+        rowRangeInSubRow = rangeIn.Rows(rowRangeInSubRow).Columns(1).Offset(1, 0).Row - rangeIn.Row + 1
+        Set rangeInSubRow = rangeIn.Rows(rowRangeInSubRow)
+    Wend
+    'Impacting the changes made on input ranges
+    rangeExport.Name = "'informations enregistrées'!" & rangeExportStr
+End Sub
+
+
 
