@@ -142,10 +142,18 @@ Sub saveInvoiceInformation()
     '***************************************** Saving the Total dû sur facture *****************************************
     TotalTTCFactureExport.Rows(currentLine).Columns(1).Value = ActiveSheet.Range("TotalTTCFacture").Value
 
-    Dim rangeInAppelDeFond As Range, columnsReferences As Variant
+'***************************************** Saving the appels de fond *****************************************
+    Dim rangeInAppelDeFond As Range, columnsReferencesAppelDeFond As Variant
     Set rangeInAppelDeFond = Range("AppelDeFond")
-    columnsReferences = Array(1, 2, 9)
-    Call addFromAreaWithGivenColumns(rangeInAppelDeFond, "AppelDeFondExport", columnsReferences, currentLine, libelle:="ADF", nbMergedRows:=2)
+    columnsReferencesAppelDeFond = Array(1, 2, 9)
+    Call addFromAreaWithGivenColumns(rangeInAppelDeFond, "AppelDeFondExport", columnsReferencesAppelDeFond, currentLine, libelle:="Appel de fond", nbMergedRows:=2)
+
+    '***************************************** Saving the factures d'acompte *****************************************
+    Dim rangeInFacturesDAcompte As Range, columnsReferencesFacturesDAcompte As Variant
+    Set rangeInFacturesDAcompte = Range("FacturesDAcompte")
+    columnsReferencesFacturesDAcompte = Array(4, 6, 8)
+    Call addFromAreaWithGivenColumns(rangeInFacturesDAcompte, "FacturesDAcompteExport", columnsReferencesFacturesDAcompte, currentLine, libelle:="Facture d'acompte", nbMergedRows:=2)
+
     '***************************************** 'Impacting the changes made on input ranges *****************************************
     ClientDetailsExport.Name = "ClientDetailsExport"
     DevisExport.Name = "DevisExport"

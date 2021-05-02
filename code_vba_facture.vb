@@ -247,7 +247,7 @@ Sub checkMontantDevis()
         montantDevis = devis.Columns(1).Offset(, 4).Value
         'We compare the two values without the decimals as the rounding isn't always the same
         If CLng(sommeArticlesDevis) <> CLng(montantDevis) Then
-            MsgBox "Attention ! Le montant TTC du devis " & devis.Value & " déclaré en " & devis.Offset(, 4).Address & " semble erroné . Vérifiez que tous les articles relatifs à ce devis ont été listés."
+            MsgBox "Attention ! Le montant TTC du devis " & devis.Value & " déclaré en " & devis.Offset(, 4).Address & " semble erroné. Vérifiez que tous les articles relatifs à ce devis ont été listés."
         End If
         indexDevis = indexDevis + 1
     Next devis
